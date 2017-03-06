@@ -58,18 +58,29 @@ class DocMaker:
 			font=self.default_font
 			)
 
-		# create notebook with two tabs
+		# create notebook with tabs
+		# aot - act of transfer
+		# ra - return act
+		# aoe - act of elimination
 		self.notebook = ttk.Notebook(
 			self.root
 			)
 		self.base_frame = Frame(
 			self.notebook
 			)
-		self.generator_frame = Frame(
+		self.aot_frame = Frame(
+			self.notebook
+			)
+		self.ra_frame = Frame(
+			self.notebook
+			)
+		self.aoe_frame = Frame(
 			self.notebook
 			)
 		self.notebook.add(self.base_frame, text=u'База')
-		self.notebook.add(self.generator_frame, text=u'Генератор')
+		self.notebook.add(self.aot_frame, text=u'Акт передачи')
+		self.notebook.add(self.ra_frame, text=u'Акт возврата')
+		self.notebook.add(self.aoe_frame, text=u'Акт уничтожения')
 
 		# create plugs for tabs
 		# it displays when files didn't selected
@@ -78,9 +89,19 @@ class DocMaker:
 			text=u'Место для базы.',
 			font=self.big_font
 			)
-		self.generator_frame_plug = Label(
-			self.generator_frame,
-			text=u'Место для генератора документов.',
+		self.aot_frame_plug = Label(
+			self.aot_frame,
+			text=u'Место для акта передачи.',
+			font=self.big_font
+			)
+		self.ra_frame_plug = Label(
+			self.ra_frame,
+			text=u'Место для акта возврата.',
+			font=self.big_font
+			)
+		self.aoe_frame_plug = Label(
+			self.aoe_frame,
+			text=u'Место для акта уничтожения.',
 			font=self.big_font
 			)
 
@@ -120,7 +141,6 @@ class DocMaker:
 		self.entry_options = []
 		self.entry_option_vars = []
 
-
 		# frame for add, delete and save buttons
 		self.action_frame = Frame(self.base_frame,pady=10,padx=10)
 		self.add_entry_button = Button(
@@ -140,65 +160,65 @@ class DocMaker:
 			)
 
 		# create text field for display primary text from doc file
-		self.plain_text_frame = Frame(self.generator_frame, padx=10,pady=10)
-		self.plain_text_label = Label(
-			self.plain_text_frame,
+		self.aot_plain_text_frame = Frame(self.aot_frame, padx=10,pady=10)
+		self.aot_plain_text_label = Label(
+			self.aot_plain_text_frame,
 			text=u'Начальный текст',
 			font=self.default_font
 			)
-		self.plain_text = Text(
-			self.plain_text_frame,
+		self.aot_plain_text = Text(
+			self.aot_plain_text_frame,
 			width=45,
 			font=self.default_font,
 			height=30
 			)
-		self.plain_text.tag_config('replaced',background='yellow')
+		self.aot_plain_text.tag_config('replaced',background='yellow')
 
 		# create text field for display text with replaced values
-		self.result_text_frame = Frame(self.generator_frame,padx=10,pady=10)
-		self.result_text_label = Label(
-			self.result_text_frame,
+		self.aot_result_text_frame = Frame(self.aot_frame,padx=10,pady=10)
+		self.aot_result_text_label = Label(
+			self.aot_result_text_frame,
 			text=u'Результирующий текст',
 			font=self.default_font)
-		self.result_text = Text(
-			self.result_text_frame,
+		self.aot_result_text = Text(
+			self.aot_result_text_frame,
 			width=45,
 			font=self.default_font,
 			height=30
 			)
-		self.result_text.tag_config('replaced',background='yellow')
+		self.aot_result_text.tag_config('replaced',background='yellow')
 
 		# create frame for replacements
 		# each replacement contain one entry for primary value,
 		# one label and one combobox for new value
 		# separators split replacements in frame
-		self.primary_values_for_replacement = []
-		self.labels_for_replacement = []
-		self.new_values_for_replacement = []
-		self.replacements_separators = []
-		self.num_of_replacements = 0
+		self.aot_primary_values_for_replacement = []
+		self.aot_labels_for_replacement = []
+		self.aot_new_values_for_replacement = []
+		self.aot_replacements_separators = []
+		self.aot_num_of_replacements = 0
 		# create canvas for scrollable frame
-		self.replacement_canvas = Canvas(
-			self.generator_frame,
+		self.aot_replacement_canvas = Canvas(
+			self.aot_frame,
 			borderwidth=0,
 			width=290,
 			height=500)
-		self.replacement_frame = Frame(self.replacement_canvas,padx=10,pady=10)
-		self.replacement_frameScroll = Scrollbar(
-			self.generator_frame,
+		self.aot_replacement_frame = Frame(self.aot_replacement_canvas,padx=10,pady=10)
+		self.aot_replacement_frameScroll = Scrollbar(
+			self.aot_frame,
 			orient=VERTICAL,
-			command=self.replacement_canvas.yview)
-		self.add_replacement_button = Button(
-			self.replacement_frame,
-			text=u'Добавить',
+			command=self.aot_replacement_canvas.yview)
+		self.aot_add_replacement_button = Button(
+			self.aot_replacement_frame,
+			text=u'Добавить замену',
 			font=self.small_font,
-			width=20,
+			width=22,
 			height=1
 			)
 		# some magic for create scrollable frame with replacement fields
-		self.replacement_canvas.configure(yscrollcommand=self.replacement_frameScroll.set)
-		self.replacement_canvas.create_window((4,4), window=self.replacement_frame, anchor=CENTER, 
-								  tags="self.replacement_frame")
+		self.aot_replacement_canvas.configure(yscrollcommand=self.aot_replacement_frameScroll.set)
+		self.aot_replacement_canvas.create_window((4,4), window=self.aot_replacement_frame, anchor=CENTER, 
+								  tags="self.aot_replacement_frame")
 
 		# create status bar in bottom of main window
 		self.status_bar = Label(
@@ -215,6 +235,8 @@ class DocMaker:
 		self.bind_all()
 
 		self.read_options()
+		self.load_base()
+		self.load_act_of_transfer()
 
 	def pack_all(self):
 
@@ -223,8 +245,8 @@ class DocMaker:
 		self.base_file_label.grid(row=1,column=0,sticky=W+N)
 		self.base_file_label_text.grid(row=1,column=1,sticky=W+N)
 		self.base_file_change_button.grid(row=1,column=2,sticky=W+N)
-		if self.base_file:
-			self.generate_button.place(relx=0.6,rely=0,width=130,height=40)
+		# if self.base_file:
+		# 	self.generate_button.place(relx=0.6,rely=0,width=130,height=40)
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True,padx=10,pady=10)
 
 		self.base_frame_plug.pack_forget()
@@ -241,20 +263,21 @@ class DocMaker:
 		self.add_entry_button.grid_forget()
 		self.del_entry_button.grid_forget()
 		self.save_base_button.grid_forget()
-		self.generator_frame_plug.pack_forget()
-		self.plain_text_frame.pack_forget()
-		self.plain_text.pack_forget()
-		self.result_text_frame.pack_forget()
-		self.result_text.pack_forget()
-		self.replacement_canvas.pack_forget()
-		self.replacement_frameScroll.pack_forget()
-		for index in range(self.num_of_replacements):
-			self.primary_values_for_replacement[index].grid_forget()
-			self.labels_for_replacement[index].grid_forget()
-			self.new_values_for_replacement[index].grid_forget()
-		for replacement_separator in self.replacements_separators:
+
+		self.aot_frame_plug.pack_forget()
+		self.aot_plain_text_frame.pack_forget()
+		self.aot_plain_text.pack_forget()
+		self.aot_result_text_frame.pack_forget()
+		self.aot_result_text.pack_forget()
+		self.aot_replacement_canvas.pack_forget()
+		self.aot_replacement_frameScroll.pack_forget()
+		for index in range(self.aot_num_of_replacements):
+			self.aot_primary_values_for_replacement[index].grid_forget()
+			self.aot_labels_for_replacement[index].grid_forget()
+			self.aot_new_values_for_replacement[index].grid_forget()
+		for replacement_separator in self.aot_replacements_separators:
 			replacement_separator.grid_forget()
-		self.add_replacement_button.grid_forget()
+		self.aot_add_replacement_button.grid_forget()
 
 		if self.base_file:
 			self.table_frame.pack(side=TOP,fill=X)
@@ -275,33 +298,32 @@ class DocMaker:
 		else:
 			self.base_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
-		# if self.example_file:
-
-		# 	self.plain_text_frame.pack(side=LEFT,fill=Y)
-		# 	self.plain_text_label.pack(side=TOP)
-		# 	self.plain_text.pack(side=LEFT,fill=Y)
-		# 	self.result_text_frame.pack(side=RIGHT,fill=Y)
-		# 	self.result_text_label.pack(side=TOP)
-		# 	self.result_text.pack(side=RIGHT,fill=Y)
-		# 	self.replacement_frameScroll.pack(side=RIGHT, fill=Y)
-		# 	self.replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
-		# 	for index in range(self.num_of_replacements):
-		# 		self.primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
-		# 		self.labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
-		# 		self.new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
-		# 	for index, replacement_separator in enumerate(self.replacements_separators):
-		# 		replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
-		# 	self.add_replacement_button.grid(row=self.num_of_replacements*5,column=0,pady=10,sticky=N)
-		# else:
-		self.generator_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
+		if self.act_of_transfer:
+			self.aot_plain_text_frame.pack(side=LEFT,fill=Y)
+			self.aot_plain_text_label.pack(side=TOP)
+			self.aot_plain_text.pack(side=LEFT,fill=Y)
+			self.aot_result_text_frame.pack(side=RIGHT,fill=Y)
+			self.aot_result_text_label.pack(side=TOP)
+			self.aot_result_text.pack(side=RIGHT,fill=Y)
+			self.aot_replacement_frameScroll.pack(side=RIGHT, fill=Y)
+			self.aot_replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
+			for index in range(self.aot_num_of_replacements):
+				self.aot_primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
+				self.aot_labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
+				self.aot_new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
+			for index, replacement_separator in enumerate(self.aot_replacements_separators):
+				replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
+			self.aot_add_replacement_button.grid(row=self.aot_num_of_replacements*5,column=0,pady=10,sticky=N)
+		else:
+			self.aot_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
 		self.status_bar.pack(side=BOTTOM,fill=X)
 
 	def bind_all(self):
 
 		'''Bind all events in a window'''
-		self.base_file_change_button.bind('<Button-1>',self.load_base)
-		self.generate_button.bind('<Button-1>',self.generate_acts)
+		self.base_file_change_button.bind('<Button-1>',self.set_base_file)
+		# self.generate_button.bind('<Button-1>',self.generate_acts)
 		if self.base_file:
 			self.base_table.bind("<<TreeviewSelect>>", self.setCurrentEntry)
 			[entry_input.bind("<Return>",self.saveEntry) for entry_input in self.entry_inputs]
@@ -312,11 +334,11 @@ class DocMaker:
 			self.root.bind('<Delete>',self.del_entry)
 			self.root.bind('<Control-s>',self.save_base)
 
-		# if self.example_file:
-		# 	self.add_replacement_button.bind('<Button-1>',self.add_replacement)
-		# 	self.replacement_frame.bind("<Configure>", self.replaceFrameConfigure)		# bind mouse scroll
-		# 	[primary_val.bind("<Return>",self.replace) for primary_val in self.primary_values_for_replacement]
-		# 	[new_val.bind("<Return>",self.replace) for new_val in self.new_values_for_replacement]
+		if self.act_of_transfer:
+			self.aot_add_replacement_button.bind('<Button-1>',self.aot_add_replacement)
+			self.aot_replacement_frame.bind("<Configure>", self.aot_replaceFrameConfigure)		# bind mouse scroll
+			[primary_val.bind("<Return>",self.aot_replace) for primary_val in self.aot_primary_values_for_replacement]
+			[new_val.bind("<Return>",self.aot_replace) for new_val in self.aot_new_values_for_replacement]
 
 	def setCurrentEntry(self,event=None):
 
@@ -365,6 +387,7 @@ class DocMaker:
 		optionsWindow = Toplevel(self.root)
 		optionsWindow.geometry('780x500')
 		optionsWindow.title(u'Настройки')
+		optionsWindow.update()
 
 		window = OptionsWindow(self,optionsWindow)
 
@@ -403,7 +426,7 @@ class DocMaker:
 									str(int(number[-1])+1),
 									values[index])
 						except Exception as e:
-							showerror(u'Ошибка!', 'Ошибка во время добавления.')
+							showerror(u'Ошибка!', 'Ошибка во время добавления.\n'+e)
 		else:
 			values = ['']*self.num_of_fields
 		if u'' in values:
@@ -426,32 +449,41 @@ class DocMaker:
 				self.num_of_entries-=1
 		self.status_bar['text'] = u'Запись удалена'
 
-	def load_base(self,event=None):
+	def set_base_file(self,event=None):
 
 		filename = askopenfilename(filetypes=(("XLS files", "*.xls;*.xlsx"),('All files','*.*')))
 		if not filename:
 			return
-		
+
+		self.base_file.set(filename)
+		self.load_base()
+
+	def load_base(self,event=None):
+
+		if not self.base_file.get():
+			return
+
 		try:
-			entries = get_data_xls(filename)
+			entries = get_data_xls(self.base_file.get())
 		except Exception as e:
 			showerror(u'Ошибка!',e)
+			self.act_of_transfer.set(u'')
 			return
 
 		if not entries:
 			showerror(u'Ошибка!',u'Пустой файл базы.')
+			self.act_of_transfer.set(u'')
 			return
 		
-		self.base_file_label_text['text'] = filename.split('/')[-1]
-		self.base_file = filename
+		self.base_file_label_text['text'] = self.base_file.get()
 		self.num_of_entries = len(entries)
 		self.num_of_fields = len(entries[0])
 		self.base_table['columns'] = ['']*self.num_of_fields
 
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
-		# if self.example_file:
-		# 	self.get_replace_variants()
+		if self.act_of_transfer:
+			self.get_replace_variants()
 
 		# set columns width
 		col_width = int(self.root.winfo_width()*0.95//self.num_of_fields)
@@ -477,34 +509,43 @@ class DocMaker:
 
 		self.status_bar['text'] = u'База Загружена'
 
-	def load_act_of_transfer(self,event=None):
+	def set_act_of_transfer(self,event=None):
 
 		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
 		if not filename:
 			return
 
+		self.act_of_transfer.set(filename)
+		self.load_act_of_transfer()
+
+	def load_act_of_transfer(self,event=None):
+
+		if not self.act_of_transfer.get():
+			return
+
 		try:
-			doc_text = get_doc_data(filename)
+			doc_text = get_doc_data(self.act_of_transfer.get())
 		except Exception as e:
 			showerror(u'Ошибка!',e)
+			self.act_of_transfer.set(u'')
 			return
 
 		if not doc_text:
 			showerror(u'Ошибка!',u'Пустой .doc файл.')
+			self.act_of_transfer.set(u'')
 			return
 
-		self.act_of_transfer = filename
 		# clear text fields and fill it
-		self.act_of_transfer_plain_text.delete(1.0,END)
-		self.act_of_transfer_result_text.delete(1.0,END)
+		self.aot_plain_text.delete(1.0,END)
+		self.aot_result_text.delete(1.0,END)
 		for line in doc_text:
-			self.act_of_transfer_plain_text.insert(END,line+'\n')
-		self.replace()			# fill result text field and add tags
+			self.aot_plain_text.insert(END,line+'\n')
+		self.aot_replace()			# fill result text field and add tags
 
 		# delete replacements if exists and init new replacements
-		self.destroy_replacements()
+		self.aot_destroy_replacements()
 		for _ in range(3):
-			self.add_replacement()
+			self.aot_add_replacement()
 
 		self.status_bar['text'] = u'Документ загружен'
 
@@ -528,81 +569,95 @@ class DocMaker:
 
 	def get_replace_variants(self,event=None):
 
-		'''Add fields from base to replace in choicefields'''
+		'''Add fields from base for replace in choicefields'''
 
-		for combobox in self.new_values_for_replacement:
+		for combobox in self.aot_new_values_for_replacement:
 			replace_values = []
 			if self.base_file:
 				replace_values.extend([u'Столбец %r' % (index+1) for index in range(self.num_of_fields)])
 			replace_values.append(u'…')
 			combobox['values'] = replace_values
 
-	def destroy_replacements(self):
+		# for combobox in self.new_values_for_replacement:
+		# 	replace_values = []
+		# 	if self.base_file:
+		# 		replace_values.extend([u'Столбец %r' % (index+1) for index in range(self.num_of_fields)])
+		# 	replace_values.append(u'…')
+		# 	combobox['values'] = replace_values
 
-		for primary_val in self.primary_values_for_replacement:
+		# for combobox in self.new_values_for_replacement:
+		# 	replace_values = []
+		# 	if self.base_file:
+		# 		replace_values.extend([u'Столбец %r' % (index+1) for index in range(self.num_of_fields)])
+		# 	replace_values.append(u'…')
+		# 	combobox['values'] = replace_values
+
+	def aot_destroy_replacements(self):
+
+		for primary_val in self.aot_primary_values_for_replacement:
 			primary_val.destroy()
-		for label in self.labels_for_replacement:
+		for label in self.aot_labels_for_replacement:
 			label.destroy()
-		for new_val in self.new_values_for_replacement:
+		for new_val in self.aot_new_values_for_replacement:
 			new_val.destroy()
-		for separator in self.replacements_separators:
+		for separator in self.aot_replacements_separators:
 			separator.destroy()
 
-		self.primary_values_for_replacement = []
-		self.labels_for_replacement = []
-		self.new_values_for_replacement = []
-		self.replacements_separators = []
-		self.num_of_replacements = 0
+		self.aot_primary_values_for_replacement = []
+		self.aot_labels_for_replacement = []
+		self.aot_new_values_for_replacement = []
+		self.aot_replacements_separators = []
+		self.aot_num_of_replacements = 0
 
-	def add_replacement(self,event=None):
+	def aot_add_replacement(self,event=None):
 
-		self.primary_values_for_replacement.append(
+		self.aot_primary_values_for_replacement.append(
 			Entry(
-				self.replacement_frame,
+				self.aot_replacement_frame,
 				width=30,
 				font=self.default_font
 				)
 			)
-		self.labels_for_replacement.append(
+		self.aot_labels_for_replacement.append(
 			Label(
-				self.replacement_frame,
+				self.aot_replacement_frame,
 				text=u'Заменить на:',
 				font=self.small_font
 				)
 			)
-		self.new_values_for_replacement.append(
+		self.aot_new_values_for_replacement.append(
 			ttk.Combobox(
-				self.replacement_frame,
+				self.aot_replacement_frame,
 				width=35,
 				font=self.small_font,
 				values=[]
 				)
 			)
-		if self.num_of_replacements>0:
-			self.replacements_separators.append(
+		if self.aot_num_of_replacements>0:
+			self.aot_replacements_separators.append(
 				ttk.Separator(
-					self.replacement_frame,
+					self.aot_replacement_frame,
 					orient=HORIZONTAL
 					)
 				)
 
-		self.num_of_replacements += 1
+		self.aot_num_of_replacements += 1
 		self.get_replace_variants()
 
 		self.pack_all()
 		self.bind_all()
 
-	def replaceFrameConfigure(self,event=None):
+	def aot_replaceFrameConfigure(self,event=None):
 
 		'''Reset the scroll region to encompass the inner frame'''
 
-		self.replacement_canvas.configure(scrollregion=self.replacement_canvas.bbox("all"))
+		self.aot_replacement_canvas.configure(scrollregion=self.aot_replacement_canvas.bbox("all"))
 
-	def get_result_value(self,index):
+	def aot_get_result_value(self,index):
 
-		num_of_column = self.new_values_for_replacement[index].current()
+		num_of_column = self.aot_new_values_for_replacement[index].current()
 		if num_of_column == -1 or num_of_column == self.num_of_fields:
-			result_value = self.new_values_for_replacement[index].get()
+			result_value = self.aot_new_values_for_replacement[index].get()
 		elif self.base_file:
 			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
 		else:
@@ -610,93 +665,83 @@ class DocMaker:
 			return
 		return result_value
 
-	# def replace(self,event=None):
+	def aot_replace(self,event=None):
 
-	# 	text = self.plain_text.get(1.0,END)
-	# 	for index in range(self.num_of_replacements):
-	# 		plain = self.primary_values_for_replacement[index].get()
-	# 		if not plain:
-	# 			continue
+		# remove tags
+		for tag in self.aot_plain_text.tag_names():
+			self.aot_plain_text.tag_remove(tag,1.0,END)
+		for tag in self.aot_result_text.tag_names():
+			self.aot_result_text.tag_remove(tag,1.0,END)
+		# copy text from plain to result
+		text = self.aot_plain_text.get(1.0,END)
+		self.aot_result_text.delete(1.0,END)
+		self.aot_result_text.insert(1.0,text)
+		plain_lines = text.split('\n')
+		for index_line,line in enumerate(plain_lines):
 
-	# 		result_value = self.get_result_value(index)
-			
-	# 		text = text.replace(
-	# 			plain,
-	# 			result_value
-	# 			)
+			if not line:
+				continue
 
-	# 	self.result_text.delete(1.0,END)
-	# 	self.result_text.insert(1.0,text)
+			start_of_line = float(index_line+1)
+			end_of_line = '%r.end' % (index_line+1)
 
-	# 	self.add_tags()
-
-	# def add_tags(self):
-
-	# 	'''Remove tags from text field and add anew'''
-
-	# 	for tag in self.plain_text.tag_names():
-	# 		self.plain_text.tag_remove(tag,1.0,END)
-	# 	for tag in self.result_text.tag_names():
-	# 		self.result_text.tag_remove(tag,1.0,END)
-
-	# 	# add yellow tag for replaced words
-	# 	for index in range(self.num_of_replacements):
-	# 		plain = self.primary_values_for_replacement[index].get()
-	# 		if not plain:
-	# 			continue
-
-	# 		num_of_column = self.new_values_for_replacement[index].current()
-	# 		if num_of_column == -1 or num_of_column == self.num_of_fields:
-	# 			result_value = self.new_values_for_replacement[index].get()
-	# 		elif self.base_file:
-	# 			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
-	# 		else:
-	# 			showerror(u'Ошибка!', u'Ошибка во время замены.')
-	# 		if not result_value:
-	# 			continue
-
-	# 		search_start = 1.0
-	# 		while True:
-	# 			start = self.plain_text.search(plain,search_start,stopindex=END)
-	# 			if not start:
-	# 				break
-	# 			end = start.split('.')[0]+'.'+str(int(start.split('.')[1])+len(plain))
-	# 			search_start = end
-	# 			self.plain_text.tag_add('replaced',start,end)
-	
-	# 		search_start = 1.0
-	# 		while True:
-	# 			start = self.result_text.search(result_value,search_start,stopindex=END)
-	# 			if not start:
-	# 				break
-	# 			end = start.split('.')[0]+'.'+str(int(start.split('.')[1])+len(result_value))
-	# 			search_start = end
-	# 			self.result_text.tag_add('replaced',start,end)
-
-	def generate_acts(self,event=None):
-
-		'''Generate new word documents with replaced values from base'''
-
-		if not self.base_file:
-			return
-
-		direct_folder = askdirectory(mustexist=True)
-		if not direct_folder:
-			return
-
-		# get data from table
-		entries = [self.base_table.item(children)['values'] for children in self.base_table.get_children()]
-		# get replacements for every row in base_table and generate new files
-		for entry_index in range(self.num_of_entries):
-			replacements = {}
-			for index in range(self.num_of_replacements):
-				primary_val = self.primary_values_for_replacement[index].get()
-				if not primary_val:
+			for index in range(self.aot_num_of_replacements):
+				plain = str(self.aot_primary_values_for_replacement[index].get())
+				if not plain:
 					continue
-				result_val = self.get_result_value(index)
-				replacements.update({primary_val:result_val})
-			doc_filename = direct_folder + '/' + u'Акт %r.docx' % (entry_index+1)
-			create_new_replaced_doc(self.example_file, doc_filename, replacements)
+				if plain not in line:
+					continue
+				result_value = str(self.aot_get_result_value(index))
+				line = line.replace(plain,result_value)
+
+				# rewrite line on new replaced line
+				self.aot_result_text.delete(start_of_line,end_of_line)
+				self.aot_result_text.insert(start_of_line,line)
+
+				# add tags to plain text
+				search_start = 1.0
+				while True:
+					start_of_tag = self.aot_plain_text.search(plain,search_start,stopindex=end_of_line)
+					if not start_of_tag:
+						break
+					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(plain))
+					self.aot_plain_text.tag_add('replaced',start_of_tag,end_of_tag)
+					search_start = end_of_tag
+
+				# add tags to result text
+				search_start = 1.0
+				while True:
+					start_of_tag = self.aot_result_text.search(result_value,search_start,stopindex=end_of_line)
+					if not start_of_tag:
+						break
+					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(result_value))
+					self.aot_result_text.tag_add('replaced',start_of_tag,end_of_tag)
+					search_start = end_of_tag
+
+	# def generate_acts(self,event=None):
+
+	# 	'''Generate new word documents with replaced values from base'''
+
+	# 	if not self.base_file:
+	# 		return
+
+	# 	direct_folder = askdirectory(mustexist=True)
+	# 	if not direct_folder:
+	# 		return
+
+	# 	# get data from table
+	# 	entries = [self.base_table.item(children)['values'] for children in self.base_table.get_children()]
+	# 	# get replacements for every row in base_table and generate new files
+	# 	for entry_index in range(self.num_of_entries):
+	# 		replacements = {}
+	# 		for index in range(self.num_of_replacements):
+	# 			primary_val = self.primary_values_for_replacement[index].get()
+	# 			if not primary_val:
+	# 				continue
+	# 			result_val = self.get_result_value(index)
+	# 			replacements.update({primary_val:result_val})
+	# 		doc_filename = direct_folder + '/' + u'Акт %r.docx' % (entry_index+1)
+	# 		create_new_replaced_doc(self.example_file, doc_filename, replacements)
 
 	def fill_table(self, entries):
 

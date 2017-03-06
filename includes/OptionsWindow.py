@@ -205,7 +205,7 @@ class OptionsWindow:
 
 	def change_destination_folder(self,event=None):
 
-		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
-		if not filename:
+		dirname = askdirectory(mustexist=True)
+		if not dirname:
 			return
-		self.destination_folder.set(filename)
+		self.destination_folder.set(dirname)
