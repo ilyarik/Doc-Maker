@@ -3,38 +3,38 @@ from tkinter.filedialog import *
 from tkinter.messagebox import *
 from tkinter.font import Font
 import tkinter.ttk as ttk
+import configparser
+from .OptionsWindow import OptionsWindow
+from collections import OrderedDict
 
 class DocMaker:
 
-	def __init__(self, root):
+	def __init__(self, root,root_dir):
 
 		self.root = root
+		self.root_dir = root_dir
 		self.big_font = Font(family="Helvetica",size=14)
 		self.default_font = Font(family="Helvetica",size=12)
 		self.small_font = Font(family="Helvetica",size=10)
 
+		self.act_of_transfer = StringVar()
+		self.return_act = StringVar()
+		self.act_of_elimination = StringVar()
+		self.destination_folder = StringVar()
+		self.base_file = StringVar()
+
+		self.menu = Menu(self.root)
+		self.filemenu = Menu(self.menu,tearoff=0)
+		self.filemenu.add_command(label=u"Выход", command=self.exit)
+		self.optionsmenu = Menu(self.menu,tearoff=0)
+		self.optionsmenu.add_command(label=u"Настройки", command=self.call_options_window)
+		self.menu.add_cascade(label=u"Файл",menu=self.filemenu)
+		self.menu.add_cascade(label=u"Настройки", menu=self.optionsmenu)
+		self.root.config(menu=self.menu)
+
 		# create frame for info about files
 		self.info_frame = Frame(self.root,pady=10,padx=10)
-		# example file label, filename and change-button
-		self.example_file = u''
-		self.example_file_label = Label(
-			self.info_frame,
-			text=u'Файл образец: ',
-			font=self.default_font
-			)
-		self.example_file_label_text = Label(
-			self.info_frame,
-			text=self.example_file,
-			font=self.default_font,
-			padx=10
-			)
-		self.example_file_change_button = Button(
-			self.info_frame,
-			text=u"…",
-			font=self.default_font
-			)
 		# input file label and filename and change-button
-		self.base_file = u''
 		self.base_file_label = Label(
 			self.info_frame,
 			text=u'Файл базы: ',
@@ -42,7 +42,7 @@ class DocMaker:
 			)
 		self.base_file_label_text = Label(
 			self.info_frame,
-			text=self.base_file,
+			textvariable=self.base_file,
 			font=self.default_font,
 			padx=10
 			)
@@ -214,18 +214,17 @@ class DocMaker:
 		self.pack_all()
 		self.bind_all()
 
+		self.read_options()
+
 	def pack_all(self):
 
 		'''Pack all elements in a window'''
 		self.info_frame.pack(side=TOP,fill=X)
-		self.example_file_label.grid(row=0,column=0,sticky=W+N)
-		self.example_file_label_text.grid(row=0,column=1,sticky=W+N)
-		self.example_file_change_button.grid(row=0,column=2,sticky=W+N)
 		self.base_file_label.grid(row=1,column=0,sticky=W+N)
 		self.base_file_label_text.grid(row=1,column=1,sticky=W+N)
 		self.base_file_change_button.grid(row=1,column=2,sticky=W+N)
-		if self.example_file and self.base_file:
-			self.generate_button.place(relx=0.85,rely=0,width=130,height=60)
+		if self.base_file:
+			self.generate_button.place(relx=0.6,rely=0,width=130,height=40)
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True,padx=10,pady=10)
 
 		self.base_frame_plug.pack_forget()
@@ -276,32 +275,31 @@ class DocMaker:
 		else:
 			self.base_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
-		if self.example_file:
+		# if self.example_file:
 
-			self.plain_text_frame.pack(side=LEFT,fill=Y)
-			self.plain_text_label.pack(side=TOP)
-			self.plain_text.pack(side=LEFT,fill=Y)
-			self.result_text_frame.pack(side=RIGHT,fill=Y)
-			self.result_text_label.pack(side=TOP)
-			self.result_text.pack(side=RIGHT,fill=Y)
-			self.replacement_frameScroll.pack(side=RIGHT, fill=Y)
-			self.replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
-			for index in range(self.num_of_replacements):
-				self.primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
-				self.labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
-				self.new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
-			for index, replacement_separator in enumerate(self.replacements_separators):
-				replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
-			self.add_replacement_button.grid(row=self.num_of_replacements*5,column=0,pady=10,sticky=N)
-		else:
-			self.generator_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
+		# 	self.plain_text_frame.pack(side=LEFT,fill=Y)
+		# 	self.plain_text_label.pack(side=TOP)
+		# 	self.plain_text.pack(side=LEFT,fill=Y)
+		# 	self.result_text_frame.pack(side=RIGHT,fill=Y)
+		# 	self.result_text_label.pack(side=TOP)
+		# 	self.result_text.pack(side=RIGHT,fill=Y)
+		# 	self.replacement_frameScroll.pack(side=RIGHT, fill=Y)
+		# 	self.replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
+		# 	for index in range(self.num_of_replacements):
+		# 		self.primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
+		# 		self.labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
+		# 		self.new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
+		# 	for index, replacement_separator in enumerate(self.replacements_separators):
+		# 		replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
+		# 	self.add_replacement_button.grid(row=self.num_of_replacements*5,column=0,pady=10,sticky=N)
+		# else:
+		self.generator_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
 		self.status_bar.pack(side=BOTTOM,fill=X)
 
 	def bind_all(self):
 
 		'''Bind all events in a window'''
-		self.example_file_change_button.bind('<Button-1>',self.load_example)
 		self.base_file_change_button.bind('<Button-1>',self.load_base)
 		self.generate_button.bind('<Button-1>',self.generate_acts)
 		if self.base_file:
@@ -314,11 +312,11 @@ class DocMaker:
 			self.root.bind('<Delete>',self.del_entry)
 			self.root.bind('<Control-s>',self.save_base)
 
-		if self.example_file:
-			self.add_replacement_button.bind('<Button-1>',self.add_replacement)
-			self.replacement_frame.bind("<Configure>", self.replaceFrameConfigure)		# bind mouse scroll
-			[primary_val.bind("<Return>",self.replace) for primary_val in self.primary_values_for_replacement]
-			[new_val.bind("<Return>",self.replace) for new_val in self.new_values_for_replacement]
+		# if self.example_file:
+		# 	self.add_replacement_button.bind('<Button-1>',self.add_replacement)
+		# 	self.replacement_frame.bind("<Configure>", self.replaceFrameConfigure)		# bind mouse scroll
+		# 	[primary_val.bind("<Return>",self.replace) for primary_val in self.primary_values_for_replacement]
+		# 	[new_val.bind("<Return>",self.replace) for new_val in self.new_values_for_replacement]
 
 	def setCurrentEntry(self,event=None):
 
@@ -332,6 +330,43 @@ class DocMaker:
 				elif isinstance(self.entry_inputs[index], Entry):
 					self.entry_inputs[index].delete(0,END)
 					self.entry_inputs[index].insert(0,value)
+
+	def read_options(self):
+
+		'''Read options from .ini file'''
+
+		configs = configparser.ConfigParser()
+		configs.read(u'%s\\USER\\configs.ini' % (self.root_dir))
+
+		self.base_file.set(configs['DEFAULT']['base_file'])
+		self.act_of_transfer.set(configs['DEFAULT']['act_of_transfer'])
+		self.return_act.set(configs['DEFAULT']['return_act'])
+		self.act_of_elimination.set(configs['DEFAULT']['act_of_elimination'])
+		self.destination_folder.set(configs['DEFAULT']['destination_folder'])
+
+	def write_options(self):
+
+		configs = configparser.ConfigParser()
+		configs['DEFAULT']['base_file'] = self.base_file.get()
+		configs['DEFAULT']['act_of_transfer'] = self.act_of_transfer.get()
+		configs['DEFAULT']['return_act'] = self.return_act.get()
+		configs['DEFAULT']['act_of_elimination'] = self.act_of_elimination.get()
+		configs['DEFAULT']['destination_folder'] = self.destination_folder.get()
+		with open(u'%s\\USER\\configs.ini' % (self.root_dir), 'w') as configfile:
+			configs.write(configfile)
+			configfile.close()
+
+	def exit(self):
+
+		self.root.quit()
+
+	def call_options_window(self):
+
+		optionsWindow = Toplevel(self.root)
+		optionsWindow.geometry('780x500')
+		optionsWindow.title(u'Настройки')
+
+		window = OptionsWindow(self,optionsWindow)
 
 	def saveEntry(self,event=None):
 
@@ -415,8 +450,8 @@ class DocMaker:
 
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
-		if self.example_file:
-			self.get_replace_variants()
+		# if self.example_file:
+		# 	self.get_replace_variants()
 
 		# set columns width
 		col_width = int(self.root.winfo_width()*0.95//self.num_of_fields)
@@ -442,7 +477,7 @@ class DocMaker:
 
 		self.status_bar['text'] = u'База Загружена'
 
-	def load_example(self,event=None):
+	def load_act_of_transfer(self,event=None):
 
 		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
 		if not filename:
@@ -458,13 +493,12 @@ class DocMaker:
 			showerror(u'Ошибка!',u'Пустой .doc файл.')
 			return
 
-		self.example_file_label_text['text'] = filename.split('/')[-1]
-		self.example_file = filename
+		self.act_of_transfer = filename
 		# clear text fields and fill it
-		self.plain_text.delete(1.0,END)
-		self.result_text.delete(1.0,END)
+		self.act_of_transfer_plain_text.delete(1.0,END)
+		self.act_of_transfer_result_text.delete(1.0,END)
 		for line in doc_text:
-			self.plain_text.insert(END,line+'\n')
+			self.act_of_transfer_plain_text.insert(END,line+'\n')
 		self.replace()			# fill result text field and add tags
 
 		# delete replacements if exists and init new replacements
@@ -472,7 +506,7 @@ class DocMaker:
 		for _ in range(3):
 			self.add_replacement()
 
-		self.status_bar['text'] = u'Образец загружен'
+		self.status_bar['text'] = u'Документ загружен'
 
 		self.pack_all()
 		self.bind_all()
@@ -576,74 +610,74 @@ class DocMaker:
 			return
 		return result_value
 
-	def replace(self,event=None):
+	# def replace(self,event=None):
 
-		text = self.plain_text.get(1.0,END)
-		for index in range(self.num_of_replacements):
-			plain = self.primary_values_for_replacement[index].get()
-			if not plain:
-				continue
+	# 	text = self.plain_text.get(1.0,END)
+	# 	for index in range(self.num_of_replacements):
+	# 		plain = self.primary_values_for_replacement[index].get()
+	# 		if not plain:
+	# 			continue
 
-			result_value = self.get_result_value(index)
+	# 		result_value = self.get_result_value(index)
 			
-			text = text.replace(
-				plain,
-				result_value
-				)
+	# 		text = text.replace(
+	# 			plain,
+	# 			result_value
+	# 			)
 
-		self.result_text.delete(1.0,END)
-		self.result_text.insert(1.0,text)
+	# 	self.result_text.delete(1.0,END)
+	# 	self.result_text.insert(1.0,text)
 
-		self.add_tags()
+	# 	self.add_tags()
 
-	def add_tags(self):
+	# def add_tags(self):
 
-		'''Remove tags from text field and add anew'''
+	# 	'''Remove tags from text field and add anew'''
 
-		for tag in self.plain_text.tag_names():
-			self.plain_text.tag_remove(tag,1.0,END)
-		for tag in self.result_text.tag_names():
-			self.result_text.tag_remove(tag,1.0,END)
+	# 	for tag in self.plain_text.tag_names():
+	# 		self.plain_text.tag_remove(tag,1.0,END)
+	# 	for tag in self.result_text.tag_names():
+	# 		self.result_text.tag_remove(tag,1.0,END)
 
-		# add yellow tag for replaced words
-		for index in range(self.num_of_replacements):
-			plain = self.primary_values_for_replacement[index].get()
-			if not plain:
-				continue
+	# 	# add yellow tag for replaced words
+	# 	for index in range(self.num_of_replacements):
+	# 		plain = self.primary_values_for_replacement[index].get()
+	# 		if not plain:
+	# 			continue
 
-			num_of_column = self.new_values_for_replacement[index].current()
-			if num_of_column == -1 or num_of_column == self.num_of_fields:
-				result_value = self.new_values_for_replacement[index].get()
-			elif self.base_file:
-				result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
-			else:
-				showerror(u'Ошибка!', u'Ошибка во время замены.')
-			if not result_value:
-				continue
+	# 		num_of_column = self.new_values_for_replacement[index].current()
+	# 		if num_of_column == -1 or num_of_column == self.num_of_fields:
+	# 			result_value = self.new_values_for_replacement[index].get()
+	# 		elif self.base_file:
+	# 			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
+	# 		else:
+	# 			showerror(u'Ошибка!', u'Ошибка во время замены.')
+	# 		if not result_value:
+	# 			continue
 
-			search_start = 1.0
-			while True:
-				start = self.plain_text.search(plain,search_start,stopindex=END)
-				if not start:
-					break
-				end = start.split('.')[0]+'.'+str(int(start.split('.')[1])+len(plain))
-				search_start = end
-				self.plain_text.tag_add('replaced',start,end)
+	# 		search_start = 1.0
+	# 		while True:
+	# 			start = self.plain_text.search(plain,search_start,stopindex=END)
+	# 			if not start:
+	# 				break
+	# 			end = start.split('.')[0]+'.'+str(int(start.split('.')[1])+len(plain))
+	# 			search_start = end
+	# 			self.plain_text.tag_add('replaced',start,end)
 	
-			search_start = 1.0
-			while True:
-				start = self.result_text.search(result_value,search_start,stopindex=END)
-				if not start:
-					break
-				end = start.split('.')[0]+'.'+str(int(start.split('.')[1])+len(result_value))
-				search_start = end
-				self.result_text.tag_add('replaced',start,end)
+	# 		search_start = 1.0
+	# 		while True:
+	# 			start = self.result_text.search(result_value,search_start,stopindex=END)
+	# 			if not start:
+	# 				break
+	# 			end = start.split('.')[0]+'.'+str(int(start.split('.')[1])+len(result_value))
+	# 			search_start = end
+	# 			self.result_text.tag_add('replaced',start,end)
 
 	def generate_acts(self,event=None):
 
 		'''Generate new word documents with replaced values from base'''
 
-		if not self.example_file or not self.base_file:
+		if not self.base_file:
 			return
 
 		direct_folder = askdirectory(mustexist=True)
