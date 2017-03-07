@@ -5,6 +5,7 @@ from tkinter.font import Font
 import tkinter.ttk as ttk
 import configparser
 from .OptionsWindow import OptionsWindow
+from .GenerateInfoWindow import GenerateInfoWindow
 from collections import OrderedDict
 
 class DocMaker:
@@ -57,17 +58,23 @@ class DocMaker:
 		self.create_aot_check = Checkbutton(
 			self.info_frame,
 			text=u'Акт передачи',
-			variable=self.create_aot
+			variable=self.create_aot,
+			onvalue=True,
+			offvalue=False
 			)
 		self.create_ra_check = Checkbutton(
 			self.info_frame,
 			text=u'Акт возврата',
-			variable=self.create_ra
+			variable=self.create_ra,
+			onvalue=True,
+			offvalue=False
 			)
 		self.create_aoe_check = Checkbutton(
 			self.info_frame,
 			text=u'Акт уничтожения',
-			variable=self.create_aoe
+			variable=self.create_aoe,
+			onvalue=True,
+			offvalue=False
 			)
 		# generate button
 		self.generate_button = Button(
@@ -536,7 +543,7 @@ class DocMaker:
 
 		'''Bind all events in a window'''
 		self.base_file_change_button.bind('<Button-1>',self.set_base_file)
-		# self.generate_button.bind('<Button-1>',self.generate_acts)
+		self.generate_button.bind('<Button-1>',self.generate_info)
 		if self.base_file:
 			self.base_table.bind("<<TreeviewSelect>>", self.setCurrentEntry)
 			[entry_input.bind("<Return>",self.saveEntry) for entry_input in self.entry_inputs]
@@ -1296,11 +1303,17 @@ class DocMaker:
 
 		'''Show this window before generate'''
 
-		if not base_file:
+		if not self.base_file:
+			return
+
+		if not self.base_table.selection():
+			return
+
+		if not self.create_aot.get() and not self.create_ra.get() and not self.create_aoe.get():
 			return
 
 		generateInfoWindow = Toplevel(self.root)
-		generateInfoWindow.geometry('780x500')
+		generateInfoWindow.geometry('600x400')
 		generateInfoWindow.title(u'Настройки')
 		generateInfoWindow.update()
 
