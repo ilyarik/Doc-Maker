@@ -167,6 +167,9 @@ class OptionsWindow:
 	def exit_with_save(self,event=None):
 
 		self.save_changes()
+		self.mainWindow.load_act_of_transfer()
+		self.mainWindow.load_return_act()
+		self.mainWindow.load_act_of_elimination()
 		self.mainWindow.status_bar['text'] = u'Изменения сохранены'
 		self.exit()
 
