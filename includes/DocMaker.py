@@ -7,6 +7,7 @@ import configparser
 from .OptionsWindow import OptionsWindow
 from .GenerateInfoWindow import GenerateInfoWindow
 from collections import OrderedDict
+import datetime
 
 class DocMaker:
 
@@ -461,7 +462,7 @@ class DocMaker:
 			replacement_separator.grid_forget()
 		self.aoe_add_replacement_button.grid_forget()
 
-		if self.base_file:
+		if self.base_file.get():
 			self.table_frame.pack(side=TOP,fill=X)
 			self.base_table.grid(row=2,column=0,sticky=W+N)
 			self.base_tableScroll.grid(row=2,column=1,sticky=N+W+S)
@@ -480,7 +481,7 @@ class DocMaker:
 		else:
 			self.base_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
-		if self.act_of_transfer:
+		if self.act_of_transfer.get():
 			self.aot_plain_text_frame.pack(side=LEFT,fill=Y)
 			self.aot_plain_text_label.pack(side=TOP)
 			self.aot_plain_text.pack(side=LEFT,fill=Y)
@@ -499,7 +500,7 @@ class DocMaker:
 		else:
 			self.aot_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
-		if self.return_act:
+		if self.return_act.get():
 			self.ra_plain_text_frame.pack(side=LEFT,fill=Y)
 			self.ra_plain_text_label.pack(side=TOP)
 			self.ra_plain_text.pack(side=LEFT,fill=Y)
@@ -518,7 +519,7 @@ class DocMaker:
 		else:
 			self.ra_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
-		if self.act_of_elimination:
+		if self.act_of_elimination.get():
 			self.aoe_plain_text_frame.pack(side=LEFT,fill=Y)
 			self.aoe_plain_text_label.pack(side=TOP)
 			self.aoe_plain_text.pack(side=LEFT,fill=Y)
@@ -688,6 +689,7 @@ class DocMaker:
 			return
 
 		self.base_file.set(filename)
+		self.write_options()
 		self.load_base()
 
 	def load_base(self,event=None):
@@ -972,11 +974,13 @@ class DocMaker:
 
 		self.aot_replacement_canvas.configure(scrollregion=self.aot_replacement_canvas.bbox("all"))
 
-	def aot_get_result_value(self,index):
+	def aot_get_result_value(self,index,index_row=0):
 
 		num_of_column = self.aot_new_values_for_replacement[index].current()
 		if num_of_column == -1 or num_of_column == self.num_of_fields:
 			result_value = self.aot_new_values_for_replacement[index].get()
+		elif self.base_file and self.base_table.selection():
+			result_value = self.base_table.item(self.base_table.selection()[index_row])['values'][num_of_column]
 		elif self.base_file:
 			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
 		else:
@@ -1033,8 +1037,6 @@ class DocMaker:
 				search_start = 1.0
 				while True:
 					start_of_tag = self.aot_result_text.search(result_value,search_start,stopindex=end_of_line)
-					print(repr(self.aot_result_text.search(result_value,search_start,stopindex=end_of_line)))
-					print()
 					if not start_of_tag:
 						break
 					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(result_value))
@@ -1102,11 +1104,13 @@ class DocMaker:
 
 		self.ra_replacement_canvas.configure(scrollregion=self.ra_replacement_canvas.bbox("all"))
 
-	def ra_get_result_value(self,index):
+	def ra_get_result_value(self,index,index_row=0):
 
 		num_of_column = self.ra_new_values_for_replacement[index].current()
 		if num_of_column == -1 or num_of_column == self.num_of_fields:
 			result_value = self.ra_new_values_for_replacement[index].get()
+		elif self.base_file and self.base_table.selection():
+			result_value = self.base_table.item(self.base_table.selection()[index_row])['values'][num_of_column]
 		elif self.base_file:
 			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
 		else:
@@ -1230,11 +1234,13 @@ class DocMaker:
 
 		self.aoe_replacement_canvas.configure(scrollregion=self.aoe_replacement_canvas.bbox("all"))
 
-	def aoe_get_result_value(self,index):
+	def aoe_get_result_value(self,index,index_row=0):
 
 		num_of_column = self.aoe_new_values_for_replacement[index].current()
 		if num_of_column == -1 or num_of_column == self.num_of_fields:
 			result_value = self.aoe_new_values_for_replacement[index].get()
+		elif self.base_file and self.base_table.selection():
+			result_value = self.base_table.item(self.base_table.selection()[index_row])['values'][num_of_column]
 		elif self.base_file:
 			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
 		else:
@@ -1274,8 +1280,6 @@ class DocMaker:
 				# rewrite line on new replaced line
 				self.aoe_result_text.delete(start_of_line,end_of_line)
 				self.aoe_result_text.insert(start_of_line,line)
-
-				print(repr('replaced'))
 
 				# add tags to plain text
 				search_start = 1.0
@@ -1326,23 +1330,62 @@ class DocMaker:
 		if not self.base_file:
 			return
 
-		direct_folder = askdirectory(mustexist=True)
-		if not direct_folder:
+		if not self.base_table.selection():
 			return
 
 		# get data from table
-		entries = [self.base_table.item(children)['values'] for children in self.base_table.get_children()]
-		# get replacements for every row in base_table and generate new files
-		for entry_index in range(self.num_of_entries):
-			replacements = {}
-			for index in range(self.num_of_replacements):
-				primary_val = self.primary_values_for_replacement[index].get()
-				if not primary_val:
-					continue
-				result_val = self.get_result_value(index)
-				replacements.update({primary_val:result_val})
-			doc_filename = direct_folder + '/' + u'Акт %r.docx' % (entry_index+1)
-			create_new_replaced_doc(self.example_file, doc_filename, replacements)
+		entries = [self.base_table.item(selitem)['values'] for selitem in self.base_table.selection()]
+		# get replacements for selected rows in base_table and generate new files
+		for index_row,entry in enumerate(entries):
+			if self.create_aot.get():
+				replacements = {}
+				for index in range(self.aot_num_of_replacements):
+					primary_val = self.aot_primary_values_for_replacement[index].get()
+					if not primary_val:
+						continue
+					result_val = self.aot_get_result_value(index,index_row)
+					replacements.update({primary_val:str(result_val)})
+				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
+								u'Передачи',
+								str(datetime.datetime.now().year),
+								str(entry[0]),
+								u'П'
+								)
+				create_new_replaced_doc(self.act_of_transfer.get(), doc_filename, replacements)
+
+			if self.create_ra.get():
+				replacements = {}
+				for index in range(self.ra_num_of_replacements):
+					primary_val = self.ra_primary_values_for_replacement[index].get()
+					if not primary_val:
+						continue
+					result_val = self.ra_get_result_value(index,index_row)
+					replacements.update({primary_val:str(result_val)})
+				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
+								u'Возврата',
+								str(datetime.datetime.now().year),
+								str(entry[0]),
+								u'В'
+								)
+				create_new_replaced_doc(self.return_act.get(), doc_filename, replacements)
+
+			if self.create_aoe.get():
+				replacements = {}
+				for index in range(self.aoe_num_of_replacements):
+					primary_val = self.aoe_primary_values_for_replacement[index].get()
+					if not primary_val:
+						continue
+					result_val = self.aoe_get_result_value(index,index_row)
+					replacements.update({primary_val:str(result_val)})
+				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
+								u'Уничтожения',
+								str(datetime.datetime.now().year),
+								str(entry[0]),
+								u'У'
+								)
+				create_new_replaced_doc(self.act_of_elimination.get(), doc_filename, replacements)
+
+		self.status_bar['text'] = u'Готово'
 
 	def fill_table(self, entries):
 

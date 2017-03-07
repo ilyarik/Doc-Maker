@@ -125,8 +125,13 @@ class GenerateInfoWindow:
 
 	def bind_all(self):
 
-		self.apply_changes_button.bind('<Button-1>',self.mainWindow.generate_acts)
+		self.apply_changes_button.bind('<Button-1>',self.ok)
 		self.cancel_changes_button.bind('<Button-1>',self.exit)
+
+	def ok(self,event=None):
+
+		self.mainWindow.generate_acts()
+		self.exit()
 
 	def exit(self,event=None):
 
@@ -162,7 +167,7 @@ class GenerateInfoWindow:
 		elif self.mainWindow.create_aoe.get():
 			act_type = u'Уничтожения'
 
-		return u'Акт %s №%s-%s-%s' % (
+		return u'Акт %s №%s-%s-%s.docx' % (
 			act_type,
 			str(datetime.datetime.now().year),
 			str(self.mainWindow.base_table.item(self.mainWindow.base_table.selection()[0])['values'][1]),
