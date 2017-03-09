@@ -5,10 +5,10 @@ from tkinter.messagebox import *
 from tkinter.font import Font
 import tkinter.ttk as ttk
 import configparser
+import datetime
 from .OptionsWindow import OptionsWindow
 from .GenerateInfoWindow import GenerateInfoWindow
-from collections import OrderedDict
-import datetime
+from .ReplacementsTabFrame import ReplacementsTabFrame
 
 class DocMaker(Tk):
 
@@ -100,15 +100,22 @@ class DocMaker(Tk):
 		self.base_frame = Frame(
 			self.notebook
 			)
-		self.aot_frame = Frame(
-			self.notebook
+		self.aot_frame = ReplacementsTabFrame(
+			self,
+			act_var=self.act_of_transfer,
+			plug_text=u'Место для акта передачи'
 			)
-		self.ra_frame = Frame(
-			self.notebook
+		self.ra_frame = ReplacementsTabFrame(
+			self,
+			act_var=self.return_act,
+			plug_text=u'Место для акта возврата'
 			)
-		self.aoe_frame = Frame(
-			self.notebook
+		self.aoe_frame = ReplacementsTabFrame(
+			self,
+			act_var=self.act_of_elimination,
+			plug_text=u'Место для акта уничтожения'
 			)
+
 		self.notebook.add(self.base_frame, text=u'База')
 		self.notebook.add(self.aot_frame, text=u'Акт передачи')
 		self.notebook.add(self.ra_frame, text=u'Акт возврата')
@@ -119,21 +126,6 @@ class DocMaker(Tk):
 		self.base_frame_plug = Label(
 			self.base_frame,
 			text=u'Место для базы.',
-			font=self.big_font
-			)
-		self.aot_frame_plug = Label(
-			self.aot_frame,
-			text=u'Место для акта передачи.',
-			font=self.big_font
-			)
-		self.ra_frame_plug = Label(
-			self.ra_frame,
-			text=u'Место для акта возврата.',
-			font=self.big_font
-			)
-		self.aoe_frame_plug = Label(
-			self.aoe_frame,
-			text=u'Место для акта уничтожения.',
 			font=self.big_font
 			)
 
@@ -191,189 +183,6 @@ class DocMaker(Tk):
 			font=self.default_font
 			)
 
-		# create text field for display primary text from doc file
-		self.aot_plain_text_frame = Frame(self.aot_frame, padx=10,pady=10)
-		self.aot_plain_text_label = Label(
-			self.aot_plain_text_frame,
-			text=u'Начальный текст',
-			font=self.default_font
-			)
-		self.aot_plain_text = Text(
-			self.aot_plain_text_frame,
-			width=45,
-			font=self.default_font,
-			height=30
-			)
-		self.aot_plain_text.tag_config('replaced',background='yellow')
-
-		# create text field for display text with replaced values
-		self.aot_result_text_frame = Frame(self.aot_frame,padx=10,pady=10)
-		self.aot_result_text_label = Label(
-			self.aot_result_text_frame,
-			text=u'Результирующий текст',
-			font=self.default_font)
-		self.aot_result_text = Text(
-			self.aot_result_text_frame,
-			width=45,
-			font=self.default_font,
-			height=30
-			)
-		self.aot_result_text.tag_config('replaced',background='yellow')
-
-		# create frame for replacements
-		# each replacement contain one entry for primary value,
-		# one label and one combobox for new value
-		# separators split replacements in frame
-		self.aot_primary_values_for_replacement = []
-		self.aot_labels_for_replacement = []
-		self.aot_new_values_for_replacement = []
-		self.aot_replacements_separators = []
-		self.aot_num_of_replacements = 0
-		# create canvas for scrollable frame
-		self.aot_replacement_canvas = Canvas(
-			self.aot_frame,
-			borderwidth=0,
-			width=290,
-			height=500)
-		self.aot_replacement_frame = Frame(self.aot_replacement_canvas,padx=10,pady=10)
-		self.aot_replacement_frameScroll = Scrollbar(
-			self.aot_frame,
-			orient=VERTICAL,
-			command=self.aot_replacement_canvas.yview)
-		self.aot_add_replacement_button = Button(
-			self.aot_replacement_frame,
-			text=u'Добавить замену',
-			font=self.small_font,
-			width=22,
-			height=1
-			)
-		# some magic for create scrollable frame with replacement fields
-		self.aot_replacement_canvas.configure(yscrollcommand=self.aot_replacement_frameScroll.set)
-		self.aot_replacement_canvas.create_window((4,4), window=self.aot_replacement_frame, anchor=CENTER, 
-								  tags="self.aot_replacement_frame")
-
-		# create text field for display primary text from doc file
-		self.ra_plain_text_frame = Frame(self.ra_frame, padx=10,pady=10)
-		self.ra_plain_text_label = Label(
-			self.ra_plain_text_frame,
-			text=u'Начальный текст',
-			font=self.default_font
-			)
-		self.ra_plain_text = Text(
-			self.ra_plain_text_frame,
-			width=45,
-			font=self.default_font,
-			height=30
-			)
-		self.ra_plain_text.tag_config('replaced',background='yellow')
-
-		# create text field for display text with replaced values
-		self.ra_result_text_frame = Frame(self.ra_frame,padx=10,pady=10)
-		self.ra_result_text_label = Label(
-			self.ra_result_text_frame,
-			text=u'Результирующий текст',
-			font=self.default_font)
-		self.ra_result_text = Text(
-			self.ra_result_text_frame,
-			width=45,
-			font=self.default_font,
-			height=30
-			)
-		self.ra_result_text.tag_config('replaced',background='yellow')
-
-		# create frame for replacements
-		# each replacement contain one entry for primary value,
-		# one label and one combobox for new value
-		# separators split replacements in frame
-		self.ra_primary_values_for_replacement = []
-		self.ra_labels_for_replacement = []
-		self.ra_new_values_for_replacement = []
-		self.ra_replacements_separators = []
-		self.ra_num_of_replacements = 0
-		# create canvas for scrollable frame
-		self.ra_replacement_canvas = Canvas(
-			self.ra_frame,
-			borderwidth=0,
-			width=290,
-			height=500)
-		self.ra_replacement_frame = Frame(self.ra_replacement_canvas,padx=10,pady=10)
-		self.ra_replacement_frameScroll = Scrollbar(
-			self.ra_frame,
-			orient=VERTICAL,
-			command=self.ra_replacement_canvas.yview)
-		self.ra_add_replacement_button = Button(
-			self.ra_replacement_frame,
-			text=u'Добавить замену',
-			font=self.small_font,
-			width=22,
-			height=1
-			)
-		# some magic for create scrollable frame with replacement fields
-		self.ra_replacement_canvas.configure(yscrollcommand=self.ra_replacement_frameScroll.set)
-		self.ra_replacement_canvas.create_window((4,4), window=self.ra_replacement_frame, anchor=CENTER, 
-								  tags="self.ra_replacement_frame")
-
-		# create text field for display primary text from doc file
-		self.aoe_plain_text_frame = Frame(self.aoe_frame, padx=10,pady=10)
-		self.aoe_plain_text_label = Label(
-			self.aoe_plain_text_frame,
-			text=u'Начальный текст',
-			font=self.default_font
-			)
-		self.aoe_plain_text = Text(
-			self.aoe_plain_text_frame,
-			width=45,
-			font=self.default_font,
-			height=30
-			)
-		self.aoe_plain_text.tag_config('replaced',background='yellow')
-
-		# create text field for display text with replaced values
-		self.aoe_result_text_frame = Frame(self.aoe_frame,padx=10,pady=10)
-		self.aoe_result_text_label = Label(
-			self.aoe_result_text_frame,
-			text=u'Результирующий текст',
-			font=self.default_font)
-		self.aoe_result_text = Text(
-			self.aoe_result_text_frame,
-			width=45,
-			font=self.default_font,
-			height=30
-			)
-		self.aoe_result_text.tag_config('replaced',background='yellow')
-
-		# create frame for replacements
-		# each replacement contain one entry for primary value,
-		# one label and one combobox for new value
-		# separators split replacements in frame
-		self.aoe_primary_values_for_replacement = []
-		self.aoe_labels_for_replacement = []
-		self.aoe_new_values_for_replacement = []
-		self.aoe_replacements_separators = []
-		self.aoe_num_of_replacements = 0
-		# create canvas for scrollable frame
-		self.aoe_replacement_canvas = Canvas(
-			self.aoe_frame,
-			borderwidth=0,
-			width=290,
-			height=500)
-		self.aoe_replacement_frame = Frame(self.aoe_replacement_canvas,padx=10,pady=10)
-		self.aoe_replacement_frameScroll = Scrollbar(
-			self.aoe_frame,
-			orient=VERTICAL,
-			command=self.aoe_replacement_canvas.yview)
-		self.aoe_add_replacement_button = Button(
-			self.aoe_replacement_frame,
-			text=u'Добавить замену',
-			font=self.small_font,
-			width=22,
-			height=1
-			)
-		# some magic for create scrollable frame with replacement fields
-		self.aoe_replacement_canvas.configure(yscrollcommand=self.aoe_replacement_frameScroll.set)
-		self.aoe_replacement_canvas.create_window((4,4), window=self.aoe_replacement_frame, anchor=CENTER, 
-								  tags="self.aoe_replacement_frame")
-
 		# create status bar in bottom of main window
 		self.status_bar = Label(
 			self,
@@ -390,9 +199,9 @@ class DocMaker(Tk):
 
 		self.read_options()
 		self.load_base()
-		self.load_act_of_transfer()
-		self.load_return_act()
-		self.load_act_of_elimination()
+		self.aot_frame.load_act()
+		self.ra_frame.load_act()
+		self.aoe_frame.load_act()
 
 	def pack_all(self):
 
@@ -423,51 +232,6 @@ class DocMaker(Tk):
 		self.del_entry_button.grid_forget()
 		self.save_base_button.grid_forget()
 
-		self.aot_frame_plug.pack_forget()
-		self.aot_plain_text_frame.pack_forget()
-		self.aot_plain_text.pack_forget()
-		self.aot_result_text_frame.pack_forget()
-		self.aot_result_text.pack_forget()
-		self.aot_replacement_canvas.pack_forget()
-		self.aot_replacement_frameScroll.pack_forget()
-		for index in range(self.aot_num_of_replacements):
-			self.aot_primary_values_for_replacement[index].grid_forget()
-			self.aot_labels_for_replacement[index].grid_forget()
-			self.aot_new_values_for_replacement[index].grid_forget()
-		for replacement_separator in self.aot_replacements_separators:
-			replacement_separator.grid_forget()
-		self.aot_add_replacement_button.grid_forget()
-
-		self.ra_frame_plug.pack_forget()
-		self.ra_plain_text_frame.pack_forget()
-		self.ra_plain_text.pack_forget()
-		self.ra_result_text_frame.pack_forget()
-		self.ra_result_text.pack_forget()
-		self.ra_replacement_canvas.pack_forget()
-		self.ra_replacement_frameScroll.pack_forget()
-		for index in range(self.ra_num_of_replacements):
-			self.ra_primary_values_for_replacement[index].grid_forget()
-			self.ra_labels_for_replacement[index].grid_forget()
-			self.ra_new_values_for_replacement[index].grid_forget()
-		for replacement_separator in self.ra_replacements_separators:
-			replacement_separator.grid_forget()
-		self.ra_add_replacement_button.grid_forget()
-
-		self.aoe_frame_plug.pack_forget()
-		self.aoe_plain_text_frame.pack_forget()
-		self.aoe_plain_text.pack_forget()
-		self.aoe_result_text_frame.pack_forget()
-		self.aoe_result_text.pack_forget()
-		self.aoe_replacement_canvas.pack_forget()
-		self.aoe_replacement_frameScroll.pack_forget()
-		for index in range(self.aoe_num_of_replacements):
-			self.aoe_primary_values_for_replacement[index].grid_forget()
-			self.aoe_labels_for_replacement[index].grid_forget()
-			self.aoe_new_values_for_replacement[index].grid_forget()
-		for replacement_separator in self.aoe_replacements_separators:
-			replacement_separator.grid_forget()
-		self.aoe_add_replacement_button.grid_forget()
-
 		if self.base_file.get():
 			self.table_frame.pack(side=TOP,fill=X)
 			self.base_table.grid(row=2,column=0,sticky=W+N)
@@ -487,62 +251,9 @@ class DocMaker(Tk):
 		else:
 			self.base_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
-		if self.act_of_transfer.get():
-			self.aot_plain_text_frame.pack(side=LEFT,fill=Y)
-			self.aot_plain_text_label.pack(side=TOP)
-			self.aot_plain_text.pack(side=LEFT,fill=Y)
-			self.aot_result_text_frame.pack(side=RIGHT,fill=Y)
-			self.aot_result_text_label.pack(side=TOP)
-			self.aot_result_text.pack(side=RIGHT,fill=Y)
-			self.aot_replacement_frameScroll.pack(side=RIGHT, fill=Y)
-			self.aot_replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
-			for index in range(self.aot_num_of_replacements):
-				self.aot_primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
-				self.aot_labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
-				self.aot_new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
-			for index, replacement_separator in enumerate(self.aot_replacements_separators):
-				replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
-			self.aot_add_replacement_button.grid(row=self.aot_num_of_replacements*5,column=0,pady=10,sticky=N)
-		else:
-			self.aot_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
-
-		if self.return_act.get():
-			self.ra_plain_text_frame.pack(side=LEFT,fill=Y)
-			self.ra_plain_text_label.pack(side=TOP)
-			self.ra_plain_text.pack(side=LEFT,fill=Y)
-			self.ra_result_text_frame.pack(side=RIGHT,fill=Y)
-			self.ra_result_text_label.pack(side=TOP)
-			self.ra_result_text.pack(side=RIGHT,fill=Y)
-			self.ra_replacement_frameScroll.pack(side=RIGHT, fill=Y)
-			self.ra_replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
-			for index in range(self.ra_num_of_replacements):
-				self.ra_primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
-				self.ra_labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
-				self.ra_new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
-			for index, replacement_separator in enumerate(self.ra_replacements_separators):
-				replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
-			self.ra_add_replacement_button.grid(row=self.ra_num_of_replacements*5,column=0,pady=10,sticky=N)
-		else:
-			self.ra_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
-
-		if self.act_of_elimination.get():
-			self.aoe_plain_text_frame.pack(side=LEFT,fill=Y)
-			self.aoe_plain_text_label.pack(side=TOP)
-			self.aoe_plain_text.pack(side=LEFT,fill=Y)
-			self.aoe_result_text_frame.pack(side=RIGHT,fill=Y)
-			self.aoe_result_text_label.pack(side=TOP)
-			self.aoe_result_text.pack(side=RIGHT,fill=Y)
-			self.aoe_replacement_frameScroll.pack(side=RIGHT, fill=Y)
-			self.aoe_replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
-			for index in range(self.aoe_num_of_replacements):
-				self.aoe_primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
-				self.aoe_labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
-				self.aoe_new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
-			for index, replacement_separator in enumerate(self.aoe_replacements_separators):
-				replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
-			self.aoe_add_replacement_button.grid(row=self.aoe_num_of_replacements*5,column=0,pady=10,sticky=N)
-		else:
-			self.aoe_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
+		self.aot_frame.pack_all()
+		self.ra_frame.pack_all()
+		self.aoe_frame.pack_all()
 
 		self.status_bar.pack(side=BOTTOM,fill=X)
 
@@ -551,7 +262,8 @@ class DocMaker(Tk):
 		'''Bind all events in a window'''
 		self.base_file_change_button.bind('<Button-1>',self.set_base_file)
 		self.generate_button.bind('<Button-1>',self.generate_info)
-		if self.base_file:
+
+		if self.base_file.get():
 			self.base_table.bind("<<TreeviewSelect>>", self.setCurrentEntry)
 			[entry_input.bind("<Return>",self.saveEntry) for entry_input in self.entry_inputs]
 			self.add_entry_button.bind('<Button-1>',self.add_entry)
@@ -561,23 +273,9 @@ class DocMaker(Tk):
 			self.bind('<Delete>',self.del_entry)
 			self.bind('<Control-s>',self.save_base)
 
-		if self.act_of_transfer:
-			self.aot_add_replacement_button.bind('<Button-1>',self.aot_add_replacement)
-			self.aot_replacement_frame.bind("<Configure>", self.aot_replaceFrameConfigure)		# bind mouse scroll
-			[primary_val.bind("<Return>",self.aot_replace) for primary_val in self.aot_primary_values_for_replacement]
-			[new_val.bind("<Return>",self.aot_replace) for new_val in self.aot_new_values_for_replacement]
-
-		if self.return_act:
-			self.ra_add_replacement_button.bind('<Button-1>',self.ra_add_replacement)
-			self.ra_replacement_frame.bind("<Configure>", self.ra_replaceFrameConfigure)		# bind mouse scroll
-			[primary_val.bind("<Return>",self.ra_replace) for primary_val in self.ra_primary_values_for_replacement]
-			[new_val.bind("<Return>",self.ra_replace) for new_val in self.ra_new_values_for_replacement]
-
-		if self.act_of_elimination:
-			self.aoe_add_replacement_button.bind('<Button-1>',self.aoe_add_replacement)
-			self.aoe_replacement_frame.bind("<Configure>", self.aoe_replaceFrameConfigure)		# bind mouse scroll
-			[primary_val.bind("<Return>",self.aoe_replace) for primary_val in self.aoe_primary_values_for_replacement]
-			[new_val.bind("<Return>",self.aoe_replace) for new_val in self.aoe_new_values_for_replacement]
+		self.aot_frame.bind_all()
+		self.ra_frame.bind_all()
+		self.aoe_frame.bind_all()
 
 	def setCurrentEntry(self,event=None):
 
@@ -717,11 +415,18 @@ class DocMaker(Tk):
 
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
-		if self.act_of_transfer:
-			self.get_replace_variants()
+
+		# change variants in choice fields into tabs
+		if self.act_of_transfer.get():
+			self.aot_frame.get_replace_variants()
+		if self.return_act.get():
+			self.ra_frame.get_replace_variants()
+		if self.act_of_elimination.get():
+			self.aoe_frame.get_replace_variants()
 
 		# set columns width
 		col_width = int(self.winfo_width()*0.95//self.num_of_fields)
+		self.base_frame.update()
 		for index in range(self.num_of_fields):
 			self.base_table.column(
 				index, 
@@ -751,42 +456,9 @@ class DocMaker(Tk):
 			return
 
 		self.act_of_transfer.set(filename)
-		self.load_act_of_transfer()
+		self.aot_frame.load_act()
 
-	def load_act_of_transfer(self,event=None):
-
-		if not self.act_of_transfer.get():
-			return
-
-		try:
-			doc_text = get_doc_data(self.act_of_transfer.get())
-		except Exception as e:
-			showerror(u'Ошибка!',e)
-			self.act_of_transfer.set(u'')
-			return
-
-		if not doc_text:
-			showerror(u'Ошибка!',u'Пустой .doc файл.')
-			self.act_of_transfer.set(u'')
-			return
-
-		# clear text fields and fill it
-		self.aot_plain_text.delete(1.0,END)
-		self.aot_result_text.delete(1.0,END)
-		for line in doc_text:
-			self.aot_plain_text.insert(END,line+'\n')
-		self.aot_replace()			# fill result text field and add tags
-
-		# delete replacements if exists and init new replacements
-		self.aot_destroy_replacements()
-		for _ in range(3):
-			self.aot_add_replacement()
-
-		self.status_bar['text'] = u'Документ загружен'
-
-		self.pack_all()
-		self.bind_all()
-
+	
 	def set_return_act(self,event=None):
 
 		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
@@ -794,41 +466,7 @@ class DocMaker(Tk):
 			return
 
 		self.return_act.set(filename)
-		self.load_return_act()
-
-	def load_return_act(self,event=None):
-
-		if not self.return_act.get():
-			return
-
-		try:
-			doc_text = get_doc_data(self.return_act.get())
-		except Exception as e:
-			showerror(u'Ошибка!',e)
-			self.return_act.set(u'')
-			return
-
-		if not doc_text:
-			showerror(u'Ошибка!',u'Пустой .doc файл.')
-			self.return_act.set(u'')
-			return
-
-		# clear text fields and fill it
-		self.ra_plain_text.delete(1.0,END)
-		self.ra_result_text.delete(1.0,END)
-		for line in doc_text:
-			self.ra_plain_text.insert(END,line+'\n')
-		self.ra_replace()			# fill result text field and add tags
-
-		# delete replacements if exists and init new replacements
-		self.ra_destroy_replacements()
-		for _ in range(3):
-			self.ra_add_replacement()
-
-		self.status_bar['text'] = u'Документ загружен'
-
-		self.pack_all()
-		self.bind_all()
+		self.ra_frame.load_act()
 
 	def set_act_of_elimination(self,event=None):
 
@@ -837,41 +475,7 @@ class DocMaker(Tk):
 			return
 
 		self.act_of_elimination.set(filename)
-		self.load_act_of_elimination()
-
-	def load_act_of_elimination(self,event=None):
-
-		if not self.act_of_elimination.get():
-			return
-
-		try:
-			doc_text = get_doc_data(self.act_of_elimination.get())
-		except Exception as e:
-			showerror(u'Ошибка!',e)
-			self.act_of_elimination.set(u'')
-			return
-
-		if not doc_text:
-			showerror(u'Ошибка!',u'Пустой .doc файл.')
-			self.act_of_elimination.set(u'')
-			return
-
-		# clear text fields and fill it
-		self.aoe_plain_text.delete(1.0,END)
-		self.aoe_result_text.delete(1.0,END)
-		for line in doc_text:
-			self.aoe_plain_text.insert(END,line+'\n')
-		self.aoe_replace()			# fill result text field and add tags
-
-		# delete replacements if exists and init new replacements
-		self.aoe_destroy_replacements()
-		for _ in range(3):
-			self.aoe_add_replacement()
-
-		self.status_bar['text'] = u'Документ загружен'
-
-		self.pack_all()
-		self.bind_all()
+		self.aoe_frame.load_act()
 
 	def save_base(self,event=None):
 
@@ -888,426 +492,11 @@ class DocMaker(Tk):
 		save_xls_data(filename,entries)
 		self.status_bar['text'] = u'База сохранена'
 
-	def get_replace_variants(self,event=None):
-
-		'''Add fields from base for replace in choicefields'''
-
-		for combobox in self.aot_new_values_for_replacement:
-			replace_values = []
-			if self.base_file:
-				replace_values.extend([u'Столбец %r' % (index+1) for index in range(self.num_of_fields)])
-			replace_values.append(u'…')
-			combobox['values'] = replace_values
-
-		for combobox in self.ra_new_values_for_replacement:
-			replace_values = []
-			if self.base_file:
-				replace_values.extend([u'Столбец %r' % (index+1) for index in range(self.num_of_fields)])
-			replace_values.append(u'…')
-			combobox['values'] = replace_values
-
-		for combobox in self.aoe_new_values_for_replacement:
-			replace_values = []
-			if self.base_file:
-				replace_values.extend([u'Столбец %r' % (index+1) for index in range(self.num_of_fields)])
-			replace_values.append(u'…')
-			combobox['values'] = replace_values
-
-	def aot_destroy_replacements(self):
-
-		for primary_val in self.aot_primary_values_for_replacement:
-			primary_val.destroy()
-		for label in self.aot_labels_for_replacement:
-			label.destroy()
-		for new_val in self.aot_new_values_for_replacement:
-			new_val.destroy()
-		for separator in self.aot_replacements_separators:
-			separator.destroy()
-
-		self.aot_primary_values_for_replacement = []
-		self.aot_labels_for_replacement = []
-		self.aot_new_values_for_replacement = []
-		self.aot_replacements_separators = []
-		self.aot_num_of_replacements = 0
-
-	def aot_add_replacement(self,event=None):
-
-		self.aot_primary_values_for_replacement.append(
-			Entry(
-				self.aot_replacement_frame,
-				width=30,
-				font=self.default_font
-				)
-			)
-		self.aot_labels_for_replacement.append(
-			Label(
-				self.aot_replacement_frame,
-				text=u'Заменить на:',
-				font=self.small_font
-				)
-			)
-		self.aot_new_values_for_replacement.append(
-			ttk.Combobox(
-				self.aot_replacement_frame,
-				width=35,
-				font=self.small_font,
-				values=[]
-				)
-			)
-		if self.aot_num_of_replacements>0:
-			self.aot_replacements_separators.append(
-				ttk.Separator(
-					self.aot_replacement_frame,
-					orient=HORIZONTAL
-					)
-				)
-
-		self.aot_num_of_replacements += 1
-		self.get_replace_variants()
-
-		self.pack_all()
-		self.bind_all()
-
-	def aot_replaceFrameConfigure(self,event=None):
-
-		'''Reset the scroll region to encompass the inner frame'''
-
-		self.aot_replacement_canvas.configure(scrollregion=self.aot_replacement_canvas.bbox("all"))
-
-	def aot_get_result_value(self,index,index_row=0):
-
-		num_of_column = self.aot_new_values_for_replacement[index].current()
-		if num_of_column == -1 or num_of_column == self.num_of_fields:
-			result_value = self.aot_new_values_for_replacement[index].get()
-		elif self.base_file and self.base_table.selection():
-			result_value = self.base_table.item(self.base_table.selection()[index_row])['values'][num_of_column]
-		elif self.base_file:
-			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
-		else:
-			showerror(u'Ошибка!', u'Не удается получить данные для замены.')
-			return
-		return result_value
-
-	def aot_replace(self,event=None):
-
-		# remove tags
-		for tag in self.aot_plain_text.tag_names():
-			self.aot_plain_text.tag_remove(tag,1.0,END)
-		for tag in self.aot_result_text.tag_names():
-			self.aot_result_text.tag_remove(tag,1.0,END)
-		# copy text from plain to result
-		text = self.aot_plain_text.get(1.0,END)
-		self.aot_result_text.delete(1.0,END)
-		self.aot_result_text.insert(1.0,text)
-		plain_lines = text.split('\n')
-		for index_line,line in enumerate(plain_lines):
-
-			if not line:
-				continue
-
-			start_of_line = float(index_line+1)
-			end_of_line = '%r.end' % (index_line+1)
-
-			for index in range(self.aot_num_of_replacements):
-				plain = str(self.aot_primary_values_for_replacement[index].get())
-				if not plain:
-					continue
-				if plain not in line:
-					continue
-				result_value = str(self.aot_get_result_value(index))
-				line = line.replace(plain,result_value)
-
-				# rewrite line on new replaced line
-				self.aot_result_text.delete(start_of_line,end_of_line)
-				self.aot_result_text.insert(start_of_line,line)
-
-				# add tags to plain text
-				search_start = 1.0
-				while True:
-					start_of_tag = self.aot_plain_text.search(plain,search_start,stopindex=end_of_line)
-					if not start_of_tag:
-						break
-					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(plain))
-					self.aot_plain_text.tag_add('replaced',start_of_tag,end_of_tag)
-					search_start = end_of_tag
-
-				# add tags to result text
-				if not result_value:
-					continue
-				search_start = 1.0
-				while True:
-					start_of_tag = self.aot_result_text.search(result_value,search_start,stopindex=end_of_line)
-					if not start_of_tag:
-						break
-					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(result_value))
-					self.aot_result_text.tag_add('replaced',start_of_tag,end_of_tag)
-					search_start = end_of_tag
-
-	def ra_destroy_replacements(self):
-
-		for primary_val in self.ra_primary_values_for_replacement:
-			primary_val.destroy()
-		for label in self.ra_labels_for_replacement:
-			label.destroy()
-		for new_val in self.ra_new_values_for_replacement:
-			new_val.destroy()
-		for separator in self.ra_replacements_separators:
-			separator.destroy()
-
-		self.ra_primary_values_for_replacement = []
-		self.ra_labels_for_replacement = []
-		self.ra_new_values_for_replacement = []
-		self.ra_replacements_separators = []
-		self.ra_num_of_replacements = 0
-
-	def ra_add_replacement(self,event=None):
-
-		self.ra_primary_values_for_replacement.append(
-			Entry(
-				self.ra_replacement_frame,
-				width=30,
-				font=self.default_font
-				)
-			)
-		self.ra_labels_for_replacement.append(
-			Label(
-				self.ra_replacement_frame,
-				text=u'Заменить на:',
-				font=self.small_font
-				)
-			)
-		self.ra_new_values_for_replacement.append(
-			ttk.Combobox(
-				self.ra_replacement_frame,
-				width=35,
-				font=self.small_font,
-				values=[]
-				)
-			)
-		if self.ra_num_of_replacements>0:
-			self.ra_replacements_separators.append(
-				ttk.Separator(
-					self.ra_replacement_frame,
-					orient=HORIZONTAL
-					)
-				)
-
-		self.ra_num_of_replacements += 1
-		self.get_replace_variants()
-
-		self.pack_all()
-		self.bind_all()
-
-	def ra_replaceFrameConfigure(self,event=None):
-
-		'''Reset the scroll region to encompass the inner frame'''
-
-		self.ra_replacement_canvas.configure(scrollregion=self.ra_replacement_canvas.bbox("all"))
-
-	def ra_get_result_value(self,index,index_row=0):
-
-		num_of_column = self.ra_new_values_for_replacement[index].current()
-		if num_of_column == -1 or num_of_column == self.num_of_fields:
-			result_value = self.ra_new_values_for_replacement[index].get()
-		elif self.base_file and self.base_table.selection():
-			result_value = self.base_table.item(self.base_table.selection()[index_row])['values'][num_of_column]
-		elif self.base_file:
-			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
-		else:
-			showerror(u'Ошибка!', u'Не удается получить данные для замены.')
-			return
-		return result_value
-
-	def ra_replace(self,event=None):
-
-		# remove tags
-		for tag in self.ra_plain_text.tag_names():
-			self.ra_plain_text.tag_remove(tag,1.0,END)
-		for tag in self.ra_result_text.tag_names():
-			self.ra_result_text.tag_remove(tag,1.0,END)
-		# copy text from plain to result
-		text = self.ra_plain_text.get(1.0,END)
-		self.ra_result_text.delete(1.0,END)
-		self.ra_result_text.insert(1.0,text)
-		plain_lines = text.split('\n')
-		for index_line,line in enumerate(plain_lines):
-
-			if not line:
-				continue
-
-			start_of_line = float(index_line+1)
-			end_of_line = '%r.end' % (index_line+1)
-
-			for index in range(self.ra_num_of_replacements):
-				plain = str(self.ra_primary_values_for_replacement[index].get())
-				if not plain:
-					continue
-				if plain not in line:
-					continue
-				result_value = str(self.ra_get_result_value(index))
-				line = line.replace(plain,result_value)
-
-				# rewrite line on new replaced line
-				self.ra_result_text.delete(start_of_line,end_of_line)
-				self.ra_result_text.insert(start_of_line,line)
-
-				# add tags to plain text
-				search_start = 1.0
-				while True:
-					start_of_tag = self.ra_plain_text.search(plain,search_start,stopindex=end_of_line)
-					if not start_of_tag:
-						break
-					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(plain))
-					self.ra_plain_text.tag_add('replaced',start_of_tag,end_of_tag)
-					search_start = end_of_tag
-
-				# add tags to result text
-				if not result_value:
-					continue
-				search_start = 1.0
-				while True:
-					start_of_tag = self.ra_result_text.search(result_value,search_start,stopindex=end_of_line)
-					if not start_of_tag:
-						break
-					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(result_value))
-					self.ra_result_text.tag_add('replaced',start_of_tag,end_of_tag)
-					search_start = end_of_tag
-
-	def aoe_destroy_replacements(self):
-
-		for primary_val in self.aoe_primary_values_for_replacement:
-			primary_val.destroy()
-		for label in self.aoe_labels_for_replacement:
-			label.destroy()
-		for new_val in self.aoe_new_values_for_replacement:
-			new_val.destroy()
-		for separator in self.aoe_replacements_separators:
-			separator.destroy()
-
-		self.aoe_primary_values_for_replacement = []
-		self.aoe_labels_for_replacement = []
-		self.aoe_new_values_for_replacement = []
-		self.aoe_replacements_separators = []
-		self.aoe_num_of_replacements = 0
-
-	def aoe_add_replacement(self,event=None):
-
-		self.aoe_primary_values_for_replacement.append(
-			Entry(
-				self.aoe_replacement_frame,
-				width=30,
-				font=self.default_font
-				)
-			)
-		self.aoe_labels_for_replacement.append(
-			Label(
-				self.aoe_replacement_frame,
-				text=u'Заменить на:',
-				font=self.small_font
-				)
-			)
-		self.aoe_new_values_for_replacement.append(
-			ttk.Combobox(
-				self.aoe_replacement_frame,
-				width=35,
-				font=self.small_font,
-				values=[]
-				)
-			)
-		if self.aoe_num_of_replacements>0:
-			self.aoe_replacements_separators.append(
-				ttk.Separator(
-					self.aoe_replacement_frame,
-					orient=HORIZONTAL
-					)
-				)
-
-		self.aoe_num_of_replacements += 1
-		self.get_replace_variants()
-
-		self.pack_all()
-		self.bind_all()
-
-	def aoe_replaceFrameConfigure(self,event=None):
-
-		'''Reset the scroll region to encompass the inner frame'''
-
-		self.aoe_replacement_canvas.configure(scrollregion=self.aoe_replacement_canvas.bbox("all"))
-
-	def aoe_get_result_value(self,index,index_row=0):
-
-		num_of_column = self.aoe_new_values_for_replacement[index].current()
-		if num_of_column == -1 or num_of_column == self.num_of_fields:
-			result_value = self.aoe_new_values_for_replacement[index].get()
-		elif self.base_file and self.base_table.selection():
-			result_value = self.base_table.item(self.base_table.selection()[index_row])['values'][num_of_column]
-		elif self.base_file:
-			result_value = self.base_table.item(self.base_table.get_children()[-1])['values'][num_of_column]
-		else:
-			showerror(u'Ошибка!', u'Не удается получить данные для замены.')
-			return
-		return result_value
-
-	def aoe_replace(self,event=None):
-
-		# remove tags
-		for tag in self.aoe_plain_text.tag_names():
-			self.aoe_plain_text.tag_remove(tag,1.0,END)
-		for tag in self.aoe_result_text.tag_names():
-			self.aoe_result_text.tag_remove(tag,1.0,END)
-		# copy text from plain to result
-		text = self.aoe_plain_text.get(1.0,END)
-		self.aoe_result_text.delete(1.0,END)
-		self.aoe_result_text.insert(1.0,text)
-		plain_lines = text.split('\n')
-		for index_line,line in enumerate(plain_lines):
-
-			if not line:
-				continue
-
-			start_of_line = float(index_line+1)
-			end_of_line = '%r.end' % (index_line+1)
-
-			for index in range(self.aoe_num_of_replacements):
-				plain = str(self.aoe_primary_values_for_replacement[index].get())
-				if not plain:
-					continue
-				if plain not in line:
-					continue
-				result_value = str(self.aoe_get_result_value(index))
-				line = line.replace(plain,result_value)
-
-				# rewrite line on new replaced line
-				self.aoe_result_text.delete(start_of_line,end_of_line)
-				self.aoe_result_text.insert(start_of_line,line)
-
-				# add tags to plain text
-				search_start = 1.0
-				while True:
-					start_of_tag = self.aoe_plain_text.search(plain,search_start,stopindex=end_of_line)
-					if not start_of_tag:
-						break
-					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(plain))
-					self.aoe_plain_text.tag_add('replaced',start_of_tag,end_of_tag)
-					search_start = end_of_tag
-
-				# add tags to result text
-				if not result_value:
-					continue
-				search_start = 1.0
-				while True:
-					start_of_tag = self.aoe_result_text.search(result_value,search_start,stopindex=end_of_line)
-					if not start_of_tag:
-						break
-					end_of_tag = start_of_tag.split('.')[0]+'.'+str(int(start_of_tag.split('.')[1])+len(result_value))
-					self.aoe_result_text.tag_add('replaced',start_of_tag,end_of_tag)
-					search_start = end_of_tag
-
 	def generate_info(self,event=None):
 
 		'''Show this window before generate'''
 
-		if not self.base_file:
+		if not self.base_file.get():
 			return
 
 		if not self.base_table.selection():
@@ -1322,7 +511,7 @@ class DocMaker(Tk):
 
 		'''Generate new word documents with replaced values from base'''
 
-		if not self.base_file:
+		if not self.base_file.get():
 			return
 
 		if not self.base_table.selection():
@@ -1334,11 +523,11 @@ class DocMaker(Tk):
 		for index_row,entry in enumerate(entries):
 			if self.create_aot.get():
 				replacements = {}
-				for index in range(self.aot_num_of_replacements):
-					primary_val = self.aot_primary_values_for_replacement[index].get()
+				for index in range(self.aot_frame.num_of_replacements):
+					primary_val = self.aot_frame.primary_values_for_replacement[index].get()
 					if not primary_val:
 						continue
-					result_val = self.aot_get_result_value(index,index_row)
+					result_val = self.aot_frame.get_result_value(index,index_row)
 					replacements.update({primary_val:str(result_val)})
 				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
 								u'Передачи',
@@ -1350,11 +539,11 @@ class DocMaker(Tk):
 
 			if self.create_ra.get():
 				replacements = {}
-				for index in range(self.ra_num_of_replacements):
-					primary_val = self.ra_primary_values_for_replacement[index].get()
+				for index in range(self.ra_frame.num_of_replacements):
+					primary_val = self.ra_frame.primary_values_for_replacement[index].get()
 					if not primary_val:
 						continue
-					result_val = self.ra_get_result_value(index,index_row)
+					result_val = self.ra_frame.get_result_value(index,index_row)
 					replacements.update({primary_val:str(result_val)})
 				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
 								u'Возврата',
@@ -1366,11 +555,11 @@ class DocMaker(Tk):
 
 			if self.create_aoe.get():
 				replacements = {}
-				for index in range(self.aoe_num_of_replacements):
-					primary_val = self.aoe_primary_values_for_replacement[index].get()
+				for index in range(self.aoe_frame.num_of_replacements):
+					primary_val = self.aoe_frame.primary_values_for_replacement[index].get()
 					if not primary_val:
 						continue
-					result_val = self.aoe_get_result_value(index,index_row)
+					result_val = self.aoe_frame.get_result_value(index,index_row)
 					replacements.update({primary_val:str(result_val)})
 				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
 								u'Уничтожения',
