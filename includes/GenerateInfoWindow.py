@@ -7,12 +7,16 @@ import tkinter.ttk as ttk
 from pprint import pprint
 import datetime
 
-class GenerateInfoWindow:
+class GenerateInfoWindow(Toplevel):
 
-	def __init__(self, mainWindow, root):
+	def __init__(self, mainWindow):
+
+		Toplevel.__init__(self)
+		self.geometry('600x400')
+		self.title(u'Генерация')
+		self.update()
 
 		self.mainWindow = mainWindow
-		self.root = root
 		self.small_font = Font(family="Helvetica",size=10)
 
 		self.entries_selected = IntVar()
@@ -27,7 +31,7 @@ class GenerateInfoWindow:
 		self.example_filename.set(self.get_example_filename())
 		self.destination_folder.set(self.mainWindow.destination_folder.get())
 
-		self.options_frame = Frame(self.root,padx=10,pady=10)
+		self.options_frame = Frame(self,padx=10,pady=10)
 		self.act_types_label = Label(
 				self.options_frame,
 				text = u"Типы актов: ",
@@ -93,14 +97,13 @@ class GenerateInfoWindow:
 				font=self.small_font
 				)
 
-		self.action_frame = Frame(self.root)
 		self.apply_changes_button = Button(
-			self.root,
+			self,
 			text = u'ОК',
 			font = self.small_font
 			)
 		self.cancel_changes_button = Button(
-			self.root,
+			self,
 			text = u'Отмена',
 			font = self.small_font
 			)
@@ -135,7 +138,7 @@ class GenerateInfoWindow:
 
 	def exit(self,event=None):
 
-		self.root.destroy()
+		self.destroy()
 
 	def get_act_types_strings(self):
 

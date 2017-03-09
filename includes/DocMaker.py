@@ -1,4 +1,5 @@
 from .functions import *
+from tkinter import *
 from tkinter.filedialog import *
 from tkinter.messagebox import *
 from tkinter.font import Font
@@ -9,11 +10,16 @@ from .GenerateInfoWindow import GenerateInfoWindow
 from collections import OrderedDict
 import datetime
 
-class DocMaker:
+class DocMaker(Tk):
 
-	def __init__(self, root,root_dir):
+	def __init__(self,root_dir):
 
-		self.root = root
+		Tk.__init__(self)
+
+		self.geometry('1200x720+50+10')
+		self.title(u'Составитель актов 2000')
+		self.update()
+
 		self.root_dir = root_dir
 		self.big_font = Font(family="Helvetica",size=14)
 		self.default_font = Font(family="Helvetica",size=12)
@@ -28,17 +34,17 @@ class DocMaker:
 		self.create_ra = BooleanVar()
 		self.create_aoe = BooleanVar()
 
-		self.menu = Menu(self.root)
+		self.menu = Menu(self)
 		self.filemenu = Menu(self.menu,tearoff=0)
 		self.filemenu.add_command(label=u"Выход", command=self.exit)
 		self.optionsmenu = Menu(self.menu,tearoff=0)
 		self.optionsmenu.add_command(label=u"Настройки", command=self.call_options_window)
 		self.menu.add_cascade(label=u"Файл",menu=self.filemenu)
 		self.menu.add_cascade(label=u"Настройки", menu=self.optionsmenu)
-		self.root.config(menu=self.menu)
+		self.config(menu=self.menu)
 
 		# create frame for info about files
-		self.info_frame = Frame(self.root,pady=10,padx=10)
+		self.info_frame = Frame(self,pady=10,padx=10)
 		# input file label and filename and change-button
 		self.base_file_label = Label(
 			self.info_frame,
@@ -89,7 +95,7 @@ class DocMaker:
 		# ra - return act
 		# aoe - act of elimination
 		self.notebook = ttk.Notebook(
-			self.root
+			self
 			)
 		self.base_frame = Frame(
 			self.notebook
@@ -370,7 +376,7 @@ class DocMaker:
 
 		# create status bar in bottom of main window
 		self.status_bar = Label(
-			self.root,
+			self,
 			border=1,
 			relief=SUNKEN,
 			anchor=W,
@@ -551,9 +557,9 @@ class DocMaker:
 			self.add_entry_button.bind('<Button-1>',self.add_entry)
 			self.del_entry_button.bind('<Button-1>',self.del_entry)
 			self.save_base_button.bind('<Button-1>',self.save_base)
-			self.root.bind('<Control-Return>',self.add_entry)
-			self.root.bind('<Delete>',self.del_entry)
-			self.root.bind('<Control-s>',self.save_base)
+			self.bind('<Control-Return>',self.add_entry)
+			self.bind('<Delete>',self.del_entry)
+			self.bind('<Control-s>',self.save_base)
 
 		if self.act_of_transfer:
 			self.aot_add_replacement_button.bind('<Button-1>',self.aot_add_replacement)
@@ -613,16 +619,11 @@ class DocMaker:
 
 	def exit(self):
 
-		self.root.quit()
+		self.quit()
 
 	def call_options_window(self):
 
-		optionsWindow = Toplevel(self.root)
-		optionsWindow.geometry('780x500')
-		optionsWindow.title(u'Настройки')
-		optionsWindow.update()
-
-		window = OptionsWindow(self,optionsWindow)
+		window = OptionsWindow(self)
 
 	def saveEntry(self,event=None):
 
@@ -720,7 +721,7 @@ class DocMaker:
 			self.get_replace_variants()
 
 		# set columns width
-		col_width = int(self.root.winfo_width()*0.95//self.num_of_fields)
+		col_width = int(self.winfo_width()*0.95//self.num_of_fields)
 		for index in range(self.num_of_fields):
 			self.base_table.column(
 				index, 
@@ -871,7 +872,6 @@ class DocMaker:
 
 		self.pack_all()
 		self.bind_all()
-
 
 	def save_base(self,event=None):
 
@@ -1316,12 +1316,7 @@ class DocMaker:
 		if not self.create_aot.get() and not self.create_ra.get() and not self.create_aoe.get():
 			return
 
-		generateInfoWindow = Toplevel(self.root)
-		generateInfoWindow.geometry('600x400')
-		generateInfoWindow.title(u'Настройки')
-		generateInfoWindow.update()
-
-		window = GenerateInfoWindow(self,generateInfoWindow)
+		window = GenerateInfoWindow(self)
 
 	def generate_acts(self,event=None):
 

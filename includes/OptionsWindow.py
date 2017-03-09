@@ -4,14 +4,17 @@ from tkinter.messagebox import *
 from tkinter.font import Font
 from tkinter import *
 import tkinter.ttk as ttk
-from pprint import pprint
 
-class OptionsWindow:
+class OptionsWindow(Toplevel):
 
-	def __init__(self, mainWindow, root):
+	def __init__(self, mainWindow):
+
+		Toplevel.__init__(self)
+		self.geometry('780x500')
+		self.title(u'Настройки')
+		self.update()
 
 		self.mainWindow = mainWindow
-		self.root = root
 		self.small_font = Font(family="Helvetica",size=10)
 
 		self.act_of_transfer = StringVar()
@@ -24,7 +27,7 @@ class OptionsWindow:
 		self.act_of_elimination.set(self.mainWindow.act_of_elimination.get())
 		self.destination_folder.set(self.mainWindow.destination_folder.get())
 
-		self.options_frame = Frame(self.root,padx=10,pady=10)
+		self.options_frame = Frame(self,padx=10,pady=10)
 		self.act_of_transfer_label = Label(
 				self.options_frame,
 				text = u"Акт передачи: ",
@@ -117,14 +120,13 @@ class OptionsWindow:
 				font=self.small_font
 				)
 
-		self.action_frame = Frame(self.root)
 		self.apply_changes_button = Button(
-			self.root,
+			self,
 			text = u'ОК',
 			font = self.small_font
 			)
 		self.cancel_changes_button = Button(
-			self.root,
+			self,
 			text = u'Отмена',
 			font = self.small_font
 			)
@@ -175,7 +177,7 @@ class OptionsWindow:
 
 	def exit(self,event=None):
 
-		self.root.destroy()
+		self.destroy()
 
 	def save_changes(self):
 
@@ -188,27 +190,35 @@ class OptionsWindow:
 	def change_act_of_transfer(self,event=None):
 
 		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
+		self.focus_force()
 		if not filename:
 			return
 		self.act_of_transfer.set(filename)
 
+
 	def change_return_act(self,event=None):
 
 		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
+		self.focus_force()
 		if not filename:
 			return
 		self.return_act.set(filename)
+		
 
 	def change_act_of_elimination(self,event=None):
 
 		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
+		self.focus_force()
 		if not filename:
 			return
 		self.act_of_elimination.set(filename)
+		
 
 	def change_destination_folder(self,event=None):
 
 		dirname = askdirectory(mustexist=True)
+		self.focus_force()
 		if not dirname:
 			return
 		self.destination_folder.set(dirname)
+		

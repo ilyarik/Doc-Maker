@@ -15,11 +15,6 @@ if __name__=="__main__":
 		# unfrozen
 		root_dir = os.path.dirname(os.path.realpath(__file__))
 
-	root = Tk()
-	root.geometry('1200x720+50+10')
-	root.title(u'Составитель актов 2000')
-	root.update()
+	maker = DocMaker(root_dir)
 
-	maker = DocMaker(root,root_dir)
-
-	root.mainloop()
+	maker.mainloop()
