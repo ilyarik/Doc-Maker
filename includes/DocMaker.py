@@ -6,6 +6,7 @@ from tkinter.font import Font
 import tkinter.ttk as ttk
 import configparser
 import datetime
+import glob
 from .OptionsWindow import OptionsWindow
 from .GenerateInfoWindow import GenerateInfoWindow
 from .ReplacementsTabFrame import ReplacementsTabFrame
@@ -213,7 +214,8 @@ class DocMaker(Tk):
 		self.base_file_label.grid(row=1,column=0,sticky=W+N)
 		self.base_file_label_text.grid(row=1,column=1,sticky=W+N)
 		self.base_file_change_button.grid(row=1,column=2,sticky=W+N)
-		if self.base_file:
+		
+		if self.base_file.get():
 			self.create_aot_check.place(relx=0.5,rely=0.2)
 			self.create_ra_check.place(relx=0.6,rely=0.2)
 			self.create_aoe_check.place(relx=0.7,rely=0.2)
@@ -323,6 +325,58 @@ class DocMaker(Tk):
 			configs.write(configfile)
 			configfile.close()
 
+	def sync_exist_acts(self):
+
+		'''Looks for docx files in destination folder,
+			add info about existing files into last column'''
+		if not self.base_file.get():
+			return
+
+		if not self.destination_folder.get():
+			return
+
+		act_filepathes = glob.glob(self.destination_folder.get()+'/*.docx')
+		if not act_filepathes:
+			return
+
+		if len(self.base_table['columns']) == self.num_of_fields:
+			self.set_base_table_cols(self.num_of_fields+1)
+
+		acts = {}
+		for act_filepath in act_filepathes:
+			try:
+				act_filename = act_filepath.split('\\')[-1]
+				entry_num = int(re.findall(r'\w+ \w+ №\d{4}-(\d+)-\w{1}.docx',act_filename)[0])
+				act_type = re.findall(r'\w+ \w+ №\d{4}-\d+-(\w{1}).docx',act_filename)[0]
+				if entry_num in acts.keys():
+					acts[entry_num].append(act_type)
+				else:
+					acts[entry_num] = [act_type]
+			except:
+				continue				
+
+		for row in self.base_table.get_children():
+			index = self.base_table.item(row)['values'][0]
+			if index in acts.keys():
+				values = self.base_table.item(row)['values']
+				values.append(','.join(acts[index]))
+			else:
+				values = self.base_table.item(row)['values']
+				values.append('')
+			self.base_table.item(row,values=values)
+
+	def set_base_table_cols(self, columns):
+
+		self.base_table['columns'] = ['']*columns
+		col_width = int(self.winfo_width()*0.95//columns)
+		for index in range(columns):
+			self.base_table.column(
+				index, 
+				width=col_width
+			)
+		# just in case
+		self.base_table.update()
+
 	def exit(self):
 
 		self.quit()
@@ -419,7 +473,7 @@ class DocMaker(Tk):
 		self.base_file_label_text['text'] = get_truncated_line(self.base_file.get(),40)
 		self.num_of_entries = len(entries)
 		self.num_of_fields = len(entries[0])
-		self.base_table['columns'] = ['']*self.num_of_fields
+		self.set_base_table_cols(self.num_of_fields)
 
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
@@ -432,14 +486,7 @@ class DocMaker(Tk):
 		if self.act_of_elimination.get():
 			self.aoe_frame.get_replace_variants()
 
-		# set columns width
-		col_width = int(self.winfo_width()*0.95//self.num_of_fields)
-		self.base_frame.update()
-		for index in range(self.num_of_fields):
-			self.base_table.column(
-				index, 
-				width=col_width
-			)
+		self.sync_exist_acts()
 
 		# destroy entry inputs and comboboxes if exists and create new
 		for entry_input in self.entry_inputs:
@@ -549,6 +596,8 @@ class DocMaker(Tk):
 								)
 				create_new_replaced_doc(self.act_of_elimination.get(), doc_filename, replacements)
 
+		showinfo(u'Успех',u'Выполнено')
+		self.sync_exist_acts()
 		self.status_bar['text'] = u'Готово'
 
 	def fill_table(self, entries):

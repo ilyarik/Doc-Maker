@@ -12,7 +12,7 @@ class GenerateInfoWindow(Toplevel):
 	def __init__(self, mainWindow):
 
 		Toplevel.__init__(self)
-		self.geometry('600x400')
+		self.geometry('700x400')
 		self.title(u'Генерация')
 		self.update()
 
@@ -90,7 +90,7 @@ class GenerateInfoWindow(Toplevel):
 				)
 		self.destination_folder_label_text = Label(
 				self.options_frame,
-				textvariable=self.destination_folder,
+				text=get_truncated_line(self.destination_folder.get(),60),
 				padx=20,
 				pady=5,
 				anchor = "ne",
@@ -173,6 +173,6 @@ class GenerateInfoWindow(Toplevel):
 		return u'Акт %s №%s-%s-%s.docx' % (
 			act_type,
 			str(datetime.datetime.now().year),
-			str(self.mainWindow.base_table.item(self.mainWindow.base_table.selection()[0])['values'][1]),
+			str(self.mainWindow.base_table.item(self.mainWindow.base_table.selection()[0])['values'][0]),
 			str(act_type[0])
 			)
