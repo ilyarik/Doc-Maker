@@ -4,18 +4,19 @@ from tkinter.messagebox import *
 from tkinter.font import Font
 from tkinter import *
 import tkinter.ttk as ttk
+from .functions import *
 
 class OptionsWindow(Toplevel):
 
 	def __init__(self, mainWindow):
 
 		Toplevel.__init__(self)
-		self.geometry('780x500')
+		self.geometry('700x500')
 		self.title(u'Настройки')
 		self.update()
 
 		self.mainWindow = mainWindow
-		self.small_font = Font(family="Helvetica",size=10)
+		self.pathesLength = 60
 
 		self.act_of_transfer = StringVar()
 		self.return_act = StringVar()
@@ -34,21 +35,21 @@ class OptionsWindow(Toplevel):
 				padx=20,
 				pady=5,
 				anchor = "nw",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.act_of_transfer_label_text = Label(
 				self.options_frame,
-				textvariable=self.act_of_transfer,
+				text=get_truncated_line(self.act_of_transfer.get(),self.pathesLength),
 				padx=20,
 				pady=5,
 				anchor = "ne",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.act_of_transfer_button = Button(
 				self.options_frame,
 				text = u'…',
 				pady=5,
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 
 		self.return_act_label = Label(
@@ -57,21 +58,21 @@ class OptionsWindow(Toplevel):
 				padx=20,
 				pady=5,
 				anchor = "nw",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.return_act_label_text = Label(
 				self.options_frame,
-				textvariable=self.return_act,
+				text=get_truncated_line(self.return_act.get(),self.pathesLength),
 				padx=20,
 				pady=5,
 				anchor = "ne",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.return_act_button = Button(
 				self.options_frame,
 				text = u'…',
 				pady=5,
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 
 		self.act_of_elimination_label = Label(
@@ -80,21 +81,21 @@ class OptionsWindow(Toplevel):
 				padx=20,
 				pady=5,
 				anchor = "nw",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.act_of_elimination_label_text = Label(
 				self.options_frame,
-				textvariable=self.act_of_elimination,
+				text=get_truncated_line(self.act_of_elimination.get(),self.pathesLength),
 				padx=20,
 				pady=5,
 				anchor = "ne",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.act_of_elimination_button = Button(
 				self.options_frame,
 				text = u'…',
 				pady=5,
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 
 		self.destination_folder_label = Label(
@@ -103,33 +104,33 @@ class OptionsWindow(Toplevel):
 				padx=20,
 				pady=5,
 				anchor = "nw",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.destination_folder_label_text = Label(
 				self.options_frame,
-				textvariable=self.destination_folder,
+				text=get_truncated_line(self.destination_folder.get(),self.pathesLength),
 				padx=20,
 				pady=5,
 				anchor = "ne",
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 		self.destination_folder_button = Button(
 				self.options_frame,
 				text = u'…',
 				pady=5,
-				font=self.small_font
+				font=self.mainWindow.small_font
 				)
 
 		self.apply_changes_button = Button(
-			self,
-			text = u'ОК',
-			font = self.small_font
-			)
+				self,
+				text = u'ОК',
+				font = self.mainWindow.small_font
+				)
 		self.cancel_changes_button = Button(
-			self,
-			text = u'Отмена',
-			font = self.small_font
-			)
+				self,
+				text = u'Отмена',
+				font = self.mainWindow.small_font
+				)
 
 		self.pack_all()
 		self.bind_all()
@@ -169,9 +170,9 @@ class OptionsWindow(Toplevel):
 	def exit_with_save(self,event=None):
 
 		self.save_changes()
-		self.mainWindow.load_act_of_transfer()
-		self.mainWindow.load_return_act()
-		self.mainWindow.load_act_of_elimination()
+		self.mainWindow.aot_frame.load_act()
+		self.mainWindow.ra_frame.load_act()
+		self.mainWindow.aoe_frame.load_act()
 		self.mainWindow.status_bar['text'] = u'Изменения сохранены'
 		self.exit()
 
@@ -194,7 +195,7 @@ class OptionsWindow(Toplevel):
 		if not filename:
 			return
 		self.act_of_transfer.set(filename)
-
+		self.act_of_transfer_label_text['text'] = get_truncated_line(self.act_of_transfer.get(), self.pathesLength)
 
 	def change_return_act(self,event=None):
 
@@ -203,7 +204,7 @@ class OptionsWindow(Toplevel):
 		if not filename:
 			return
 		self.return_act.set(filename)
-		
+		self.return_act_label_text['text'] = get_truncated_line(self.return_act.get(), self.pathesLength)
 
 	def change_act_of_elimination(self,event=None):
 
@@ -212,7 +213,7 @@ class OptionsWindow(Toplevel):
 		if not filename:
 			return
 		self.act_of_elimination.set(filename)
-		
+		self.act_of_elimination_label_text['text'] = get_truncated_line(self.act_of_elimination.get(), self.pathesLength)
 
 	def change_destination_folder(self,event=None):
 
@@ -221,4 +222,4 @@ class OptionsWindow(Toplevel):
 		if not dirname:
 			return
 		self.destination_folder.set(dirname)
-		
+		self.destination_folder_label_text['text'] = get_truncated_line(self.destination_folder.get(), self.pathesLength)

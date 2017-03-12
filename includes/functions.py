@@ -1,11 +1,11 @@
 from openpyxl import load_workbook, Workbook
-from datetime import datetime
+import datetime
 from pprint import pprint
 from docx import Document
 from docx.shared import Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-month_names = [
+month_names = (
 	u'января',
 	u'февраля',
 	u'марта',
@@ -18,7 +18,7 @@ month_names = [
 	u'октября',
 	u'ноября',
 	u'декабря'
-	]
+	)
 
 def get_data_xls(filename):
 
@@ -107,3 +107,19 @@ def create_new_replaced_doc(fin,fout,replacements):
 									run.text = run.text.replace(old_data, new_data)
 
 	document.save(fout)
+
+def get_current_date_russian():
+
+	now = datetime.datetime.now()
+	return u'« %s » %s %sг.' % (
+		now.day,
+		month_names[now.month-1],
+		now.year
+		)
+
+def get_truncated_line(line,length):
+
+	if len(line)<=length:
+		return line
+	
+	return line[:length//2 - 3] + ' ... ' + line[-length//2:]

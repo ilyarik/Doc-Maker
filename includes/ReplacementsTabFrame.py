@@ -5,15 +5,18 @@ from tkinter.font import Font
 from tkinter import *
 import tkinter.ttk as ttk
 from .functions import *
+import configparser
 
 class ReplacementsTabFrame(Frame):
 
-	def __init__(self, mainWindow, act_var, plug_text):
+	def __init__(self, mainWindow, act_name, act_var, plug_text):
 
 		Frame.__init__(self)
 
 		self.mainWindow = mainWindow
+		self.act_name = act_name
 		self.act_var = act_var
+		self.replacements = {}
 
 		self.frame_plug = Label(
 			self,
@@ -153,15 +156,17 @@ class ReplacementsTabFrame(Frame):
 		self.replace()			# fill result text field and add tags
 
 		# delete replacements if exists and init new replacements
+		self.read_replacements()
 		self.destroy_replacements()
-		for _ in range(3):
+		for _ in range(len(self.replacements)):
 			self.add_replacement()
+		self.set_replacements_entries()
+		self.replace()
 
 		self.mainWindow.status_bar['text'] = u'Документ загружен'
 
 		self.pack_all()
 		self.bind_all()
-
 
 	def get_replace_variants(self):
 
@@ -169,10 +174,31 @@ class ReplacementsTabFrame(Frame):
 		for combobox in self.new_values_for_replacement:
 			replace_values = []
 			if self.mainWindow.base_file.get():
-				replace_values.extend([u'Столбец %r' % (index+1) for index in range(self.mainWindow.num_of_fields)])
+				replace_values.extend([u'*Столбец %r*' % (index+1) for index in range(self.mainWindow.num_of_fields)])
 			replace_values.append(u'…')
 			combobox['values'] = replace_values
 
+	def read_replacements(self):
+
+		'''Read replacements dict from .ini file'''
+
+		configs = configparser.ConfigParser()
+		configs.read(u'%s\\USER\\configs.ini' % (self.mainWindow.root_dir))
+		
+		if self.act_name == 'aot':
+			self.replacements = eval(configs['Act_of_transfer']['replacements'])
+		elif self.act_name == 'ra':
+			self.replacements = eval(configs['Return_act']['replacements'])
+		elif self.act_name == 'aoe':
+			self.replacements = eval(configs['Act_of_elimination']['replacements'])
+
+		'''Set some replacements customly'''
+		if 'ЗАМЕНАДАТА' in self.replacements.keys():
+			self.replacements['ЗАМЕНАДАТА'] = get_current_date_russian()
+		if 'ЗАМЕНАДАТА1' in self.replacements.keys():
+			self.replacements['ЗАМЕНАДАТА1'] = get_current_date_russian()
+		if 'ЗАМЕНАДАТА2' in self.replacements.keys():
+			self.replacements['ЗАМЕНАДАТА2'] = get_current_date_russian()
 	def destroy_replacements(self):
 
 		for primary_val in self.primary_values_for_replacement:
@@ -228,6 +254,14 @@ class ReplacementsTabFrame(Frame):
 		self.pack_all()
 		self.bind_all()
 
+	def set_replacements_entries(self):
+
+		'''Set entries'''
+		for index,(old_val,new_val) in enumerate(self.replacements.items()):
+			self.primary_values_for_replacement[index].delete(0,END)
+			self.primary_values_for_replacement[index].insert(0,old_val)
+			self.new_values_for_replacement[index].set(new_val)
+
 	def replaceFrameConfigure(self,event=None):
 
 		'''Reset the scroll region to encompass the inner frame'''
@@ -239,10 +273,10 @@ class ReplacementsTabFrame(Frame):
 		num_of_column = self.new_values_for_replacement[index].current()
 		if num_of_column == -1 or num_of_column == self.mainWindow.num_of_fields:
 			result_value = self.new_values_for_replacement[index].get()
-		elif self.base_file and self.base_table.selection():
-			result_value = self.base_table.item(self.base_table.selection()[index_row])['values'][num_of_column]
-		elif self.base_file:
-			result_value = self.base_table.item(self.base_table.get_children()[0])['values'][num_of_column]
+		elif self.mainWindow.base_file and self.mainWindow.base_table.selection():
+			result_value = self.mainWindow.base_table.item(self.mainWindow.base_table.selection()[index_row])['values'][num_of_column]
+		elif self.mainWindow.base_file:
+			result_value = self.mainWindow.base_table.item(self.mainWindow.base_table.get_children()[0])['values'][num_of_column]
 		else:
 			showerror(u'Ошибка!', u'Не удается получить данные для замены.')
 			return

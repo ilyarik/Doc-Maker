@@ -53,7 +53,7 @@ class DocMaker(Tk):
 			)
 		self.base_file_label_text = Label(
 			self.info_frame,
-			textvariable=self.base_file,
+			text='',
 			font=self.default_font,
 			padx=10
 			)
@@ -102,16 +102,19 @@ class DocMaker(Tk):
 			)
 		self.aot_frame = ReplacementsTabFrame(
 			self,
+			act_name='aot',
 			act_var=self.act_of_transfer,
 			plug_text=u'Место для акта передачи'
 			)
 		self.ra_frame = ReplacementsTabFrame(
 			self,
+			act_name='ra',
 			act_var=self.return_act,
 			plug_text=u'Место для акта возврата'
 			)
 		self.aoe_frame = ReplacementsTabFrame(
 			self,
+			act_name='aoe',
 			act_var=self.act_of_elimination,
 			plug_text=u'Место для акта уничтожения'
 			)
@@ -211,9 +214,9 @@ class DocMaker(Tk):
 		self.base_file_label_text.grid(row=1,column=1,sticky=W+N)
 		self.base_file_change_button.grid(row=1,column=2,sticky=W+N)
 		if self.base_file:
-			self.create_aot_check.place(relx=0.45,rely=0)
-			self.create_ra_check.place(relx=0.55,rely=0)
-			self.create_aoe_check.place(relx=0.65,rely=0)
+			self.create_aot_check.place(relx=0.55,rely=0)
+			self.create_ra_check.place(relx=0.65,rely=0)
+			self.create_aoe_check.place(relx=0.75,rely=0)
 			self.generate_button.place(relx=0.85,rely=0,width=130,height=40)
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True,padx=10,pady=10)
 
@@ -293,24 +296,26 @@ class DocMaker(Tk):
 	def read_options(self):
 
 		'''Read options from .ini file'''
-
 		configs = configparser.ConfigParser()
 		configs.read(u'%s\\USER\\configs.ini' % (self.root_dir))
 
 		self.base_file.set(configs['DEFAULT']['base_file'])
-		self.act_of_transfer.set(configs['DEFAULT']['act_of_transfer'])
-		self.return_act.set(configs['DEFAULT']['return_act'])
-		self.act_of_elimination.set(configs['DEFAULT']['act_of_elimination'])
+		self.act_of_transfer.set(configs['Act_of_transfer']['filename'])
+		self.return_act.set(configs['Return_act']['filename'])
+		self.act_of_elimination.set(configs['Act_of_elimination']['filename'])
 		self.destination_folder.set(configs['DEFAULT']['destination_folder'])
 
 	def write_options(self):
 
 		configs = configparser.ConfigParser()
+		configs.read(u'%s\\USER\\configs.ini' % (self.root_dir))
 		configs['DEFAULT']['base_file'] = self.base_file.get()
-		configs['DEFAULT']['act_of_transfer'] = self.act_of_transfer.get()
-		configs['DEFAULT']['return_act'] = self.return_act.get()
-		configs['DEFAULT']['act_of_elimination'] = self.act_of_elimination.get()
 		configs['DEFAULT']['destination_folder'] = self.destination_folder.get()
+
+		configs['Act_of_transfer']['filename'] = self.act_of_transfer.get()
+		configs['Return_act']['filename'] = self.return_act.get()
+		configs['Act_of_elimination']['filename'] = self.act_of_elimination.get()
+		
 		with open(u'%s\\USER\\configs.ini' % (self.root_dir), 'w') as configfile:
 			configs.write(configfile)
 			configfile.close()
@@ -408,7 +413,7 @@ class DocMaker(Tk):
 			self.act_of_transfer.set(u'')
 			return
 		
-		self.base_file_label_text['text'] = self.base_file.get()
+		self.base_file_label_text['text'] = get_truncated_line(self.base_file.get(),30)
 		self.num_of_entries = len(entries)
 		self.num_of_fields = len(entries[0])
 		self.base_table['columns'] = ['']*self.num_of_fields
@@ -448,34 +453,6 @@ class DocMaker(Tk):
 		self.bind_all()
 
 		self.status_bar['text'] = u'База Загружена'
-
-	def set_act_of_transfer(self,event=None):
-
-		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
-		if not filename:
-			return
-
-		self.act_of_transfer.set(filename)
-		self.aot_frame.load_act()
-
-	
-	def set_return_act(self,event=None):
-
-		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
-		if not filename:
-			return
-
-		self.return_act.set(filename)
-		self.ra_frame.load_act()
-
-	def set_act_of_elimination(self,event=None):
-
-		filename = askopenfilename(filetypes=(("Doc files", "*.doc;*.docx"),('All files','*.*')))
-		if not filename:
-			return
-
-		self.act_of_elimination.set(filename)
-		self.aoe_frame.load_act()
 
 	def save_base(self,event=None):
 
