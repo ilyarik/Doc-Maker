@@ -214,9 +214,9 @@ class DocMaker(Tk):
 		self.base_file_label_text.grid(row=1,column=1,sticky=W+N)
 		self.base_file_change_button.grid(row=1,column=2,sticky=W+N)
 		if self.base_file:
-			self.create_aot_check.place(relx=0.55,rely=0)
-			self.create_ra_check.place(relx=0.65,rely=0)
-			self.create_aoe_check.place(relx=0.75,rely=0)
+			self.create_aot_check.place(relx=0.5,rely=0.2)
+			self.create_ra_check.place(relx=0.6,rely=0.2)
+			self.create_aoe_check.place(relx=0.7,rely=0.2)
 			self.generate_button.place(relx=0.85,rely=0,width=130,height=40)
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True,padx=10,pady=10)
 
@@ -268,7 +268,10 @@ class DocMaker(Tk):
 
 		if self.base_file.get():
 			self.base_table.bind("<<TreeviewSelect>>", self.setCurrentEntry)
-			[entry_input.bind("<Return>",self.saveEntry) for entry_input in self.entry_inputs]
+			for entry_input in self.entry_inputs:
+				entry_input.bind("<Return>",self.saveEntry)
+				if isinstance(entry_input,ttk.Combobox):
+					entry_input.bind('<KeyRelease>',self.change_combobox_values)
 			self.add_entry_button.bind('<Button-1>',self.add_entry)
 			self.del_entry_button.bind('<Button-1>',self.del_entry)
 			self.save_base_button.bind('<Button-1>',self.save_base)
@@ -413,7 +416,7 @@ class DocMaker(Tk):
 			self.act_of_transfer.set(u'')
 			return
 		
-		self.base_file_label_text['text'] = get_truncated_line(self.base_file.get(),30)
+		self.base_file_label_text['text'] = get_truncated_line(self.base_file.get(),40)
 		self.num_of_entries = len(entries)
 		self.num_of_fields = len(entries[0])
 		self.base_table['columns'] = ['']*self.num_of_fields
@@ -593,7 +596,11 @@ class DocMaker(Tk):
 			
 			cur_val = self.entry_inputs[index].get()
 			if self.entry_option_vars[index].get() == u'Выбрать из списка':
-				values = list(set([self.base_table.item(item)['values'][index] for item in self.base_table.get_children()]))
+				values = list(set(
+					[self.base_table.item(item)['values'][index] \
+					for item in self.base_table.get_children() \
+					if self.base_table.item(item)['values'][index]
+					]))
 				item = ttk.Combobox(
 						self.entry_frame,
 						width=23,
@@ -611,5 +618,20 @@ class DocMaker(Tk):
 
 			self.entry_inputs[index].destroy()
 			self.entry_inputs[index] = item
-			self.pack_all()
-			self.bind_all()
+		self.pack_all()
+		self.bind_all()
+
+	def change_combobox_values(self, event=None):
+
+		'''Autocompletion for comboboxes'''
+
+		for index in range(self.num_of_fields):
+			# filter combobox input values
+			if isinstance(self.entry_inputs[index], ttk.Combobox):
+				values = list(set(
+					[self.base_table.item(item)['values'][index] \
+					for item in self.base_table.get_children() \
+					if self.base_table.item(item)['values'][index]
+					]))
+				values = list(filter(lambda value: value.startswith(self.entry_inputs[index].get()),values))
+				self.entry_inputs[index]['values'] = values
