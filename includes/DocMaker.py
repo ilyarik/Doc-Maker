@@ -99,7 +99,7 @@ class DocMaker(Tk):
 			self
 			)
 		self.base_frame = Frame(
-			self.notebook
+			self
 			)
 		self.aot_frame = ReplacementsTabFrame(
 			self,
@@ -148,7 +148,8 @@ class DocMaker(Tk):
 			command=self.base_table.yview)
 		self.base_table.configure(yscrollcommand=self.base_tableScroll.set)	# attach scrollbar
 		ttk.Style().configure('Treeview',rowheight=25)						# set row height
-		self.base_table.tag_configure('yellow_row',background='yellow')		# set tags
+		self.base_table.tag_configure('yellow_row',background='#FFFF99')		# set tags
+		self.base_table.tag_configure('red_row',background='#FF9999')
 		self.base_table.tag_configure('table_text',font=self.small_font)
 
 		# labels for entry inputs and addition modes
@@ -198,9 +199,6 @@ class DocMaker(Tk):
 			padx=10
 			)
 
-		self.pack_all()
-		self.bind_all()
-
 		self.read_options()
 		self.load_base()
 		self.aot_frame.load_act()
@@ -238,9 +236,9 @@ class DocMaker(Tk):
 		self.save_base_button.grid_forget()
 
 		if self.base_file.get():
-			self.table_frame.pack(side=TOP,fill=X)
-			self.base_table.grid(row=2,column=0,sticky=W+N)
-			self.base_tableScroll.grid(row=2,column=1,sticky=N+W+S)
+			self.table_frame.pack(side=TOP,fill=X,expand=True)
+			self.base_table.pack(side=LEFT,fill=X,expand=True)
+			self.base_tableScroll.pack(side=RIGHT,fill=Y)
 			self.entry_frame.pack(side=LEFT,fill=Y)
 			self.entry_label.grid(row=0,column=0,sticky=W+N)
 			self.modes_label.grid(row=0,column=1,sticky=W+N,padx=10)
@@ -291,7 +289,8 @@ class DocMaker(Tk):
 		if selitems:
 			selitem = selitems[-1]
 			values = self.base_table.item(selitem)['values']
-			for index,value in enumerate(values):
+			for index in range(self.num_of_fields):
+				value = values[index]
 				if isinstance(self.entry_inputs[index], ttk.Combobox):
 					self.entry_inputs[index].set(value)
 				elif isinstance(self.entry_inputs[index], Entry):
@@ -329,6 +328,13 @@ class DocMaker(Tk):
 
 		'''Looks for docx files in destination folder,
 			add info about existing files into last column'''
+		# clear last column
+		for row in self.base_table.get_children():
+			tags = self.base_table.item(row)['tags']
+			values = self.base_table.item(row)['values']
+			values[self.num_of_fields] = ''
+			self.base_table.item(row,values=values,tags=tags)
+
 		if not self.base_file.get():
 			return
 
@@ -356,14 +362,18 @@ class DocMaker(Tk):
 				continue				
 
 		for row in self.base_table.get_children():
-			index = self.base_table.item(row)['values'][0]
+			tags = self.base_table.item(row)['tags']
+			if not tags:
+				tags = []
+			values = self.base_table.item(row)['values']
+			index = values[0]
 			if index in acts.keys():
-				values = self.base_table.item(row)['values']
-				values.append(','.join(acts[index]))
+				values[self.num_of_fields] = ','.join(acts[index])
+				if len(acts[index]) == 3:
+					tags.append('red_row')
 			else:
-				values = self.base_table.item(row)['values']
-				values.append('')
-			self.base_table.item(row,values=values)
+				values[self.num_of_fields] = ''
+			self.base_table.item(row,values=values,tags=tags)
 
 	def set_base_table_cols(self, columns):
 
@@ -375,7 +385,7 @@ class DocMaker(Tk):
 				width=col_width
 			)
 		# just in case
-		self.base_table.update()
+		self.update()
 
 	def exit(self):
 
@@ -393,7 +403,8 @@ class DocMaker(Tk):
 		selitem = selitems[-1]
 		tags = []
 		values = [entry_input.get() for entry_input in self.entry_inputs]
-		if u'' in values:
+		values.append(self.base_table.item(selitem)['values'][self.num_of_fields])
+		if u'' in values[:-1]:
 			tags.append("yellow_row")
 		self.base_table.item(selitem,values=values,tags=tags)
 
@@ -420,7 +431,7 @@ class DocMaker(Tk):
 									str(int(number[-1])+1),
 									values[index])
 						except Exception as e:
-							showerror(u'Ошибка!', 'Ошибка во время добавления.\n'+e)
+							showerror(u'Ошибка!', e)
 		else:
 			values = ['']*self.num_of_fields
 		if u'' in values:
@@ -462,18 +473,16 @@ class DocMaker(Tk):
 			entries = get_data_xls(self.base_file.get())
 		except Exception as e:
 			showerror(u'Ошибка!',e)
-			self.act_of_transfer.set(u'')
 			return
 
 		if not entries:
 			showerror(u'Ошибка!',u'Пустой файл базы.')
-			self.act_of_transfer.set(u'')
 			return
 		
 		self.base_file_label_text['text'] = get_truncated_line(self.base_file.get(),40)
 		self.num_of_entries = len(entries)
 		self.num_of_fields = len(entries[0])
-		self.set_base_table_cols(self.num_of_fields)
+		self.set_base_table_cols(self.num_of_fields+1)
 
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
@@ -514,7 +523,7 @@ class DocMaker(Tk):
 			return
 		entries = []
 		for row in rows:
-			entry = self.base_table.item(row)['values']
+			entry = self.base_table.item(row)['values'][:-1]
 			entries.append(entry)
 		save_xls_data(filename,entries)
 		self.status_bar['text'] = u'База сохранена'
@@ -610,7 +619,8 @@ class DocMaker(Tk):
 					values.append(u'')
 				else:
 					values.append(str(cell))
-			if u'' in values:
+			values.append('')
+			if u'' in values[:-1]:
 				tags.append("yellow_row")
 			self.base_table.insert('', 'end', values=values, tags=tags)
 
