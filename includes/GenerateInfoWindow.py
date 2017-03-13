@@ -6,13 +6,14 @@ from tkinter import *
 import tkinter.ttk as ttk
 from pprint import pprint
 import datetime
+from .functions import *
 
 class GenerateInfoWindow(Toplevel):
 
 	def __init__(self, mainWindow):
 
 		Toplevel.__init__(self)
-		self.geometry('700x400')
+		self.geometry('600x400')
 		self.title(u'Генерация')
 		self.update()
 

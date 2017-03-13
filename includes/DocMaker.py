@@ -17,7 +17,7 @@ class DocMaker(Tk):
 
 		Tk.__init__(self)
 
-		self.geometry('1200x720+50+10')
+		self.geometry('1200x800+50+10')
 		self.title(u'Составитель актов 2000')
 		self.update()
 
@@ -204,6 +204,8 @@ class DocMaker(Tk):
 		self.aot_frame.load_act()
 		self.ra_frame.load_act()
 		self.aoe_frame.load_act()
+		self.pack_all()
+		self.bind_all()
 
 	def pack_all(self):
 
@@ -656,10 +658,10 @@ class DocMaker(Tk):
 			cur_val = self.entry_inputs[index].get()
 			if self.entry_option_vars[index].get() == u'Выбрать из списка':
 				values = list(set(
-					[self.base_table.item(item)['values'][index] \
+					sorted([self.base_table.item(item)['values'][index] \
 					for item in self.base_table.get_children() \
 					if self.base_table.item(item)['values'][index]
-					]))
+					])))
 				item = ttk.Combobox(
 						self.entry_frame,
 						width=23,
@@ -688,9 +690,9 @@ class DocMaker(Tk):
 			# filter combobox input values
 			if isinstance(self.entry_inputs[index], ttk.Combobox):
 				values = list(set(
-					[self.base_table.item(item)['values'][index] \
+					sorted([self.base_table.item(item)['values'][index] \
 					for item in self.base_table.get_children() \
 					if self.base_table.item(item)['values'][index]
-					]))
+					])))
 				values = list(filter(lambda value: value.startswith(self.entry_inputs[index].get()),values))
 				self.entry_inputs[index]['values'] = values
