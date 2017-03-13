@@ -248,7 +248,7 @@ class DocMaker(Tk):
 				entry_input.grid(row=index+1,column=0,sticky=W+N)
 				entry_input.lift()												# set tab order
 			for index, entry_combobox in enumerate(self.entry_options):
-				entry_combobox.grid(row=index+1,column=1,sticky=W+N,padx=10)
+				entry_combobox.grid(row=index+1,column=1,sticky=W+N+S,padx=10)
 			self.action_frame.pack(side=LEFT,fill=Y)
 			self.add_entry_button.grid(row=4,column=2,sticky=W+N+E+S)
 			self.del_entry_button.grid(row=5,column=2,sticky=W+N+E+S)
@@ -641,27 +641,30 @@ class DocMaker(Tk):
 			var = StringVar()
 			var.set(self.ADDITION_MODES[0])
 			self.entry_option_vars.append(var)
-			self.entry_options.append(
-				OptionMenu(
-					self.entry_frame, 
-					var, 
-					*self.ADDITION_MODES,
-					command = self.change_entry_inputs
-					)
-			)
+			optionmenu = OptionMenu(
+				self.entry_frame, 
+				var, 
+				*self.ADDITION_MODES,
+				command = self.change_entry_inputs
+				)
+			# optionmenu.configure(width=width)
+			self.entry_options.append(optionmenu)
+			
 			
 	def change_entry_inputs(self,event=None):
 
 		'''Change input when entry option has chaged'''
 		for index in range(self.num_of_fields):
-			
 			cur_val = self.entry_inputs[index].get()
 			if self.entry_option_vars[index].get() == u'Выбрать из списка':
-				values = list(set(
-					sorted([self.base_table.item(item)['values'][index] \
-					for item in self.base_table.get_children() \
-					if self.base_table.item(item)['values'][index]
-					])))
+				# get set of values for combobox choices, sorted alphabetically
+				values = set()
+				for row in self.base_table.get_children():
+					value = str(self.base_table.item(row)['values'][index])
+					if value:
+						values.add(value)	
+				values = sorted(values, key=str.lower)
+				values = list(filter(lambda value: value.lower().startswith(self.entry_inputs[index].get().lower()),values))
 				item = ttk.Combobox(
 						self.entry_frame,
 						width=23,
@@ -689,10 +692,11 @@ class DocMaker(Tk):
 		for index in range(self.num_of_fields):
 			# filter combobox input values
 			if isinstance(self.entry_inputs[index], ttk.Combobox):
-				values = list(set(
-					sorted([self.base_table.item(item)['values'][index] \
-					for item in self.base_table.get_children() \
-					if self.base_table.item(item)['values'][index]
-					])))
-				values = list(filter(lambda value: value.startswith(self.entry_inputs[index].get()),values))
+				values = set()
+				for row in self.base_table.get_children():
+					value = str(self.base_table.item(row)['values'][index])
+					if value:
+						values.add(value)
+				values = sorted(values, key=str.lower)
+				values = list(filter(lambda value: value.lower().startswith(self.entry_inputs[index].get().lower()),values))
 				self.entry_inputs[index]['values'] = values
