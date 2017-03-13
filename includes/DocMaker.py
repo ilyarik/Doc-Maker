@@ -238,7 +238,7 @@ class DocMaker(Tk):
 		self.save_base_button.grid_forget()
 
 		if self.base_file.get():
-			self.table_frame.pack(side=TOP,fill=X,expand=True)
+			self.table_frame.pack(side=TOP,fill=X)
 			self.base_table.pack(side=LEFT,fill=X,expand=True)
 			self.base_tableScroll.pack(side=RIGHT,fill=Y)
 			self.entry_frame.pack(side=LEFT,fill=Y)
@@ -247,8 +247,8 @@ class DocMaker(Tk):
 			for index, entry_input in enumerate(self.entry_inputs):
 				entry_input.grid(row=index+1,column=0,sticky=W+N)
 				entry_input.lift()												# set tab order
-			for index, entry_combobox in enumerate(self.entry_options):
-				entry_combobox.grid(row=index+1,column=1,sticky=W+N+S,padx=10)
+			for index, entry_option in enumerate(self.entry_options):
+				entry_option.grid(row=index+1,column=1,sticky=W+N+S,padx=10)
 			self.action_frame.pack(side=LEFT,fill=Y)
 			self.add_entry_button.grid(row=4,column=2,sticky=W+N+E+S)
 			self.del_entry_button.grid(row=5,column=2,sticky=W+N+E+S)
@@ -613,7 +613,16 @@ class DocMaker(Tk):
 
 	def fill_table(self, entries):
 
-		for index,entry in enumerate(entries):
+		# set columns title
+		for col_index,cell in enumerate(entries[0]):
+			col_name = str(col_index+1)+'. '+str(cell)
+			self.base_table.heading(col_index,text=col_name)
+
+		if len(self.base_table['columns']) == self.num_of_fields+1:
+			col_name = str(self.num_of_fields+1)+u'. В наличии'
+			self.base_table.heading(self.num_of_fields,text=col_name)
+
+		for index,entry in enumerate(entries[1:]):
 			values=[]
 			tags = []
 			for cell in entry:
@@ -647,7 +656,7 @@ class DocMaker(Tk):
 				*self.ADDITION_MODES,
 				command = self.change_entry_inputs
 				)
-			# optionmenu.configure(width=width)
+			optionmenu.configure(width=16)
 			self.entry_options.append(optionmenu)
 			
 			
