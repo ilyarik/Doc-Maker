@@ -20,13 +20,11 @@ class GenerateInfoWindow(Toplevel):
 		self.mainWindow = mainWindow
 		self.small_font = Font(family="Helvetica",size=10)
 
-		self.entries_selected = IntVar()
 		self.act_types = StringVar()
 		self.total_create = IntVar()
 		self.example_filename = StringVar()
 		self.destination_folder = StringVar()
 
-		self.entries_selected.set(len(self.mainWindow.base_table.selection()))
 		self.act_types.set(self.get_act_types_strings())
 		self.total_create.set(self.get_total_create())
 		self.example_filename.set(self.get_example_filename())
@@ -153,7 +151,7 @@ class GenerateInfoWindow(Toplevel):
 	def get_total_create(self):
 
 		return len(
-			self.mainWindow.base_table.selection()
+			self.mainWindow.base_frame.base_table.selection()
 			)*sum(
 				[self.mainWindow.create_aot.get(),
 				self.mainWindow.create_ra.get(),
@@ -171,9 +169,11 @@ class GenerateInfoWindow(Toplevel):
 		elif self.mainWindow.create_aoe.get():
 			act_type = u'Уничтожения'
 
+		selitem = self.mainWindow.base_frame.base_table.selection()[0]
+
 		return u'Акт %s №%s-%s-%s.docx' % (
 			act_type,
 			str(datetime.datetime.now().year),
-			str(self.mainWindow.base_table.item(self.mainWindow.base_table.selection()[0])['values'][0]),
+			str(self.mainWindow.base_frame.base_table.item(selitem)['values'][0]),
 			str(act_type[0])
 			)

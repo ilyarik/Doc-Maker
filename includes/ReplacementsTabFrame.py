@@ -174,7 +174,7 @@ class ReplacementsTabFrame(Frame):
 		for combobox in self.new_values_for_replacement:
 			replace_values = []
 			if self.mainWindow.base_file.get():
-				replace_values.extend([u'*Столбец %r*' % (index+1) for index in range(self.mainWindow.num_of_fields)])
+				replace_values.extend([u'*Столбец %r*' % (index+1) for index in range(self.mainWindow.base_frame.num_of_fields)])
 			replace_values.append(u'…')
 			combobox['values'] = replace_values
 
@@ -271,12 +271,12 @@ class ReplacementsTabFrame(Frame):
 	def get_result_value(self,index,index_row=0):
 
 		num_of_column = self.new_values_for_replacement[index].current()
-		if num_of_column == -1 or num_of_column == self.mainWindow.num_of_fields:
+		if num_of_column == -1 or num_of_column == self.mainWindow.base_frame.num_of_fields:
 			result_value = self.new_values_for_replacement[index].get()
-		elif self.mainWindow.base_file and self.mainWindow.base_table.selection():
-			result_value = self.mainWindow.base_table.item(self.mainWindow.base_table.selection()[index_row])['values'][num_of_column]
+		elif self.mainWindow.base_file and self.mainWindow.base_frame.base_table.selection():
+			result_value = self.mainWindow.base_frame.base_table.item(self.mainWindow.base_frame.base_table.selection()[index_row])['values'][num_of_column]
 		elif self.mainWindow.base_file:
-			result_value = self.mainWindow.base_table.item(self.mainWindow.base_table.get_children()[0])['values'][num_of_column]
+			result_value = self.mainWindow.base_frame.base_table.item(self.mainWindow.base_frame.base_table.get_children()[0])['values'][num_of_column]
 		else:
 			showerror(u'Ошибка!', u'Не удается получить данные для замены.')
 			return

@@ -100,7 +100,7 @@ class OptionsWindow(Toplevel):
 
 		self.destination_folder_label = Label(
 				self.options_frame,
-				text = u"Папка с результатами: ",
+				text = u"Папка с актами: ",
 				padx=20,
 				pady=5,
 				anchor = "nw",
@@ -186,7 +186,7 @@ class OptionsWindow(Toplevel):
 		self.mainWindow.return_act.set(self.return_act.get())
 		self.mainWindow.act_of_elimination.set(self.act_of_elimination.get())
 		self.mainWindow.destination_folder.set(self.destination_folder.get())
-		self.mainWindow.sync_exist_acts()
+		self.mainWindow.base_frame.sync_exist_acts()
 		self.mainWindow.write_options()
 
 	def change_act_of_transfer(self,event=None):
