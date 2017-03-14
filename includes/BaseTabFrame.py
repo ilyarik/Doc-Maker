@@ -74,7 +74,7 @@ class BaseTabFrame(Frame):
 		self.action_frame = Frame(self,pady=10,padx=10)
 		self.add_entry_button = Button(
 			self.action_frame, 
-			text=u'Добавить',
+			text=u'Добавить (Ctrl+Enter)',
 			font=self.default_font
 			)
 		self.del_entry_button = Button(
@@ -84,7 +84,7 @@ class BaseTabFrame(Frame):
 			)
 		self.save_base_button = Button(
 			self.action_frame, 
-			text=u'Сохранить базу',
+			text=u'Сохранить базу (Ctrl+S)',
 			font=self.default_font
 			)
 
@@ -113,13 +113,18 @@ class BaseTabFrame(Frame):
 			self.base_table.pack(side=LEFT,fill=X,expand=True)
 			self.base_tableScroll.pack(side=RIGHT,fill=Y)
 			self.entry_frame.pack(side=LEFT,fill=Y)
-			self.entry_label.grid(row=0,column=0,sticky=W+N)
-			self.modes_label.grid(row=0,column=1,sticky=W+N,padx=10)
+			self.entry_label.grid(row=0,column=1,sticky=W+N)
+			self.modes_label.grid(row=0,column=2,sticky=W+N,padx=10)
 			for index, entry_input in enumerate(self.entry_inputs):
-				entry_input.grid(row=index+1,column=0,sticky=W+N)
+				Label(
+					self.entry_frame,
+					text=self.base_table.heading(index)['text'],
+					font=self.small_font
+					).grid(row=index+1,column=0,sticky=W+N)
+				entry_input.grid(row=index+1,column=1,sticky=W+N)
 				entry_input.lift()												# set tab order
 			for index, entry_option in enumerate(self.entry_options):
-				entry_option.grid(row=index+1,column=1,sticky=W+N+S,padx=10)
+				entry_option.grid(row=index+1,column=2,sticky=W+N+S,padx=10)
 			self.action_frame.pack(side=LEFT,fill=Y)
 			self.add_entry_button.grid(row=4,column=2,sticky=W+N+E+S)
 			self.del_entry_button.grid(row=5,column=2,sticky=W+N+E+S)
@@ -403,7 +408,7 @@ class BaseTabFrame(Frame):
 				try:
 					date = datetime.datetime.strptime(date, self.date_format)
 				except Exception as e:
-					showerror(u'Ошибка.',u'Неверный формат даты (столбец %r) в строке %r. Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col,row_index+1,e))
+					showerror(u'Ошибка.',u'Неверный формат даты (столбец %r) в строке %r. Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col+1,row_index+1,e))
 					break
 			values[self.aoe_date_col] = add_date(date,years=1,months=3).strftime(self.date_format)
 			self.base_table.item(item,values=values)

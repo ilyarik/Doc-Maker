@@ -171,6 +171,8 @@ class DocMaker(Tk):
 		self.generate_button.bind('<Button-1>',self.generate_info)
 
 		self.base_frame.bind_all()
+		self.bind('<Control-Return>',self.base_frame.add_entry)
+		self.bind('<Control-s>',self.base_frame.save_base)
 
 		self.aot_frame.bind_all()
 		self.ra_frame.bind_all()
