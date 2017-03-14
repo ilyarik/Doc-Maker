@@ -193,12 +193,9 @@ class ReplacementsTabFrame(Frame):
 			self.replacements = eval(configs['Act_of_elimination']['replacements'])
 
 		'''Set some replacements customly'''
-		if 'ЗАМЕНАДАТА' in self.replacements.keys():
-			self.replacements['ЗАМЕНАДАТА'] = get_current_date_russian()
-		if 'ЗАМЕНАДАТА1' in self.replacements.keys():
-			self.replacements['ЗАМЕНАДАТА1'] = get_current_date_russian()
-		if 'ЗАМЕНАДАТА2' in self.replacements.keys():
-			self.replacements['ЗАМЕНАДАТА2'] = get_current_date_russian()
+		for old_val, new_val in self.replacements.items():
+			if 'ЗАМЕНАДАТА' in old_val:
+				self.replacements[old_val] = get_current_date_russian()
 
 	def destroy_replacements(self):
 
@@ -310,6 +307,11 @@ class ReplacementsTabFrame(Frame):
 				if plain not in line:
 					continue
 				result_value = str(self.get_result_value(index))
+				# process specific replacement for initials
+				if 'ФИО' in plain:
+					surname, name, patronymic = result_value.split()
+					result_value = '%s %s. %s.' % (surname,name[0],patronymic[0])
+
 				line = line.replace(plain,result_value)
 
 				# rewrite line on new replaced line
