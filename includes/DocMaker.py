@@ -22,6 +22,7 @@ class DocMaker(Tk):
 		self.update()
 
 		self.root_dir = root_dir
+		self.configsFileName = u'%s\\USER\\configs.ini' % (self.root_dir)
 		self.big_font = Font(family="Helvetica",size=14)
 		self.default_font = Font(family="Helvetica",size=12)
 		self.small_font = Font(family="Helvetica",size=10)
@@ -179,9 +180,9 @@ class DocMaker(Tk):
 
 		'''Read options from .ini file'''
 		configs = configparser.ConfigParser()
-		configs.read(u'%s\\USER\\configs.ini' % (self.root_dir))
+		configs.read(self.configsFileName)
 
-		self.base_file.set(configs['DEFAULT']['base_file'])
+		self.base_file.set(configs['Base']['filename'])
 		self.act_of_transfer.set(configs['Act_of_transfer']['filename'])
 		self.return_act.set(configs['Return_act']['filename'])
 		self.act_of_elimination.set(configs['Act_of_elimination']['filename'])
@@ -190,8 +191,8 @@ class DocMaker(Tk):
 	def write_options(self):
 
 		configs = configparser.ConfigParser()
-		configs.read(u'%s\\USER\\configs.ini' % (self.root_dir))
-		configs['DEFAULT']['base_file'] = self.base_file.get()
+		configs.read(self.configsFileName)
+		configs['Base']['filename'] = self.base_file.get()
 		configs['DEFAULT']['destination_folder'] = self.destination_folder.get()
 
 		configs['Act_of_transfer']['filename'] = self.act_of_transfer.get()

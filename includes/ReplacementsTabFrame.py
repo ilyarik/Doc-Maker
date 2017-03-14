@@ -183,7 +183,7 @@ class ReplacementsTabFrame(Frame):
 		'''Read replacements dict from .ini file'''
 
 		configs = configparser.ConfigParser()
-		configs.read(u'%s\\USER\\configs.ini' % (self.mainWindow.root_dir))
+		configs.read(self.mainWindow.configsFileName)
 		
 		if self.act_name == 'aot':
 			self.replacements = eval(configs['Act_of_transfer']['replacements'])
@@ -199,6 +199,7 @@ class ReplacementsTabFrame(Frame):
 			self.replacements['ЗАМЕНАДАТА1'] = get_current_date_russian()
 		if 'ЗАМЕНАДАТА2' in self.replacements.keys():
 			self.replacements['ЗАМЕНАДАТА2'] = get_current_date_russian()
+
 	def destroy_replacements(self):
 
 		for primary_val in self.primary_values_for_replacement:

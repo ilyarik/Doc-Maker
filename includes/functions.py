@@ -4,6 +4,7 @@ from pprint import pprint
 from docx import Document
 from docx.shared import Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from dateutil.relativedelta import relativedelta
 
 month_names = (
 	u'января',
@@ -119,7 +120,14 @@ def get_current_date_russian():
 
 def get_truncated_line(line,length):
 
+	if len(line)<6:
+		return line
+
 	if len(line)<=length:
 		return line
 	
 	return line[:length//2 - 3] + ' ... ' + line[-length//2:]
+
+def add_date(d,years=0,months=0):
+
+	return d + relativedelta(years=+years,months=months)

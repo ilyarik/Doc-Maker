@@ -7,6 +7,7 @@ import tkinter.ttk as ttk
 from .functions import *
 import configparser
 import glob
+import datetime
 
 class BaseTabFrame(Frame):
 
@@ -18,6 +19,12 @@ class BaseTabFrame(Frame):
 		self.small_font = self.mainWindow.small_font
 		self.default_font = self.mainWindow.default_font
 		self.big_font = self.mainWindow.big_font
+
+		# num of columns with date of act of transfer and act of elimination
+		# set values in self.readDateCols
+		self.aot_date_col = 0
+		self.aoe_date_col = 0
+		self.date_format = ''
 
 		# it displays when files didn't selected
 		self.base_frame_plug = Label(
@@ -67,19 +74,21 @@ class BaseTabFrame(Frame):
 		self.action_frame = Frame(self,pady=10,padx=10)
 		self.add_entry_button = Button(
 			self.action_frame, 
-			text=u'Добавить (ctrl+Enter)',
+			text=u'Добавить',
 			font=self.default_font
 			)
 		self.del_entry_button = Button(
 			self.action_frame, 
-			text=u'Удалить (Del)',
+			text=u'Удалить',
 			font=self.default_font
 			)
 		self.save_base_button = Button(
 			self.action_frame, 
-			text=u'Сохранить (ctrl+s)',
+			text=u'Сохранить базу',
 			font=self.default_font
 			)
+
+		self.readDateCols()
 
 	def pack_all(self):
 
@@ -130,9 +139,17 @@ class BaseTabFrame(Frame):
 			self.add_entry_button.bind('<Button-1>',self.add_entry)
 			self.del_entry_button.bind('<Button-1>',self.del_entry)
 			self.save_base_button.bind('<Button-1>',self.save_base)
-			self.bind('<Control-Return>',self.add_entry)
-			self.bind('<Delete>',self.del_entry)
-			self.bind('<Control-s>',self.save_base)
+
+	def readDateCols(self):
+
+		'''Read nums of 2 cols from configs file:
+			one with date of transfer act, one with date of elimination act'''
+		configs = configparser.RawConfigParser()
+		configs.read(self.mainWindow.configsFileName)
+
+		self.aot_date_col = int(configs['Base']['aot_date_col'])-1
+		self.aoe_date_col = int(configs['Base']['aoe_date_col'])-1
+		self.date_format = configs['Base']['date_format']
 
 	def sync_exist_acts(self):
 
@@ -218,11 +235,13 @@ class BaseTabFrame(Frame):
 			return
 		selitem = selitems[-1]
 		tags = []
+		values_tmp = self.base_table.item(selitem)['values']
 		values = [entry_input.get() for entry_input in self.entry_inputs]
 		values.append(self.base_table.item(selitem)['values'][self.num_of_fields])
 		if u'' in values[:-1]:
 			tags.append("yellow_row")
 		self.base_table.item(selitem,values=values,tags=tags)
+		self.refreshAutoDate()
 
 	def add_entry(self,event=None):
 
@@ -256,6 +275,7 @@ class BaseTabFrame(Frame):
 		self.num_of_entries+=1
 		self.base_table.selection_set(self.base_table.get_children()[-1])
 		self.base_table.see(self.base_table.get_children()[-1])
+		self.refreshAutoDate()
 		self.mainWindow.status_bar['text'] = u'Запись добавлена'
 
 	def del_entry(self,event=None):
@@ -345,18 +365,48 @@ class BaseTabFrame(Frame):
 			col_name = str(self.num_of_fields+1)+u'. В наличии'
 			self.base_table.heading(self.num_of_fields,text=col_name)
 
-		for index,entry in enumerate(entries[1:]):
-			values=[]
+		for entry in entries[1:]:
+			values=[u'']*self.num_of_fields
 			tags = []
-			for cell in entry:
+			for index_col,cell in enumerate(entry):
 				if not cell:
-					values.append(u'')
+					continue
+				if self.aot_date_col and index_col==self.aot_date_col:
+					values[index_col] = cell.strftime(self.date_format)
 				else:
-					values.append(str(cell))
+					values[index_col] = cell
 			values.append('')
 			if u'' in values[:-1]:
 				tags.append("yellow_row")
 			self.base_table.insert('', 'end', values=values, tags=tags)
+
+		self.refreshAutoDate()
+
+	def refreshAutoDate(self):
+
+		'''Check all cells where need to input date of aot and insert aoe date'''
+		self.readDateCols()
+
+		if self.aot_date_col<1 or self.aot_date_col>self.num_of_fields:
+			return
+
+		if self.aoe_date_col<1 or self.aoe_date_col>self.num_of_fields:
+			return
+
+		items = self.base_table.get_children()
+		for row_index,item in enumerate(items):
+			values = self.base_table.item(item)['values']
+			date = values[self.aot_date_col]
+			if not date:
+				continue
+			if type(date) != datetime.datetime:
+				try:
+					date = datetime.datetime.strptime(date, self.date_format)
+				except Exception as e:
+					showerror(u'Ошибка.',u'Неверный формат даты (столбец %r) в строке %r. Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col,row_index+1,e))
+					break
+			values[self.aoe_date_col] = add_date(date,years=1,months=3).strftime(self.date_format)
+			self.base_table.item(item,values=values)
 
 	def create_entry_inputs(self,amount):
 
