@@ -260,8 +260,12 @@ class DocMaker(Tk):
 						continue
 					result_val = self.aot_frame.get_result_value(index,index_row)
 					if 'ФИО' in primary_val:
-						surname, name, patronymic = result_val.split()
-						result_val = '%s %s. %s.' % (surname,name[0],patronymic[0])
+						try:
+							surname, name, patronymic = result_val.split()
+							result_val = '%s %s. %s.' % (surname,name[0],patronymic[0])
+						except Exception as e:
+							showerror(u'Ошибка.',u'Не могу разделить ФИО на фамилию и инициалы для %s.\n%s' % (primary_val,e))
+							return
 					replacements.update({primary_val:str(result_val)})
 				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
 								u'Передачи',
@@ -279,8 +283,12 @@ class DocMaker(Tk):
 						continue
 					result_val = self.ra_frame.get_result_value(index,index_row)
 					if 'ФИО' in primary_val:
-						surname, name, patronymic = result_val.split()
-						result_val = '%s %s. %s.' % (surname,name[0],patronymic[0])
+						try:
+							surname, name, patronymic = result_val.split()
+							result_val = '%s %s. %s.' % (surname,name[0],patronymic[0])
+						except Exception as e:
+							showerror(u'Ошибка.',u'Не могу разделить ФИО на фамилию и инициалы для %s.\n%s' % (primary_val,e))
+							return
 					replacements.update({primary_val:str(result_val)})
 				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
 								u'Возврата',
@@ -298,8 +306,12 @@ class DocMaker(Tk):
 						continue
 					result_val = self.aoe_frame.get_result_value(index,index_row)
 					if 'ФИО' in primary_val:
-						surname, name, patronymic = result_val.split()
-						result_val = '%s %s. %s.' % (surname,name[0],patronymic[0])
+						try:
+							surname, name, patronymic = result_val.split()
+							result_val = '%s %s. %s.' % (surname,name[0],patronymic[0])
+						except Exception as e:
+							showerror(u'Ошибка.',u'Не могу разделить ФИО на фамилию и инициалы для %s.\n%s' % (primary_val,e))
+							return
 					replacements.update({primary_val:str(result_val)})
 				doc_filename = self.destination_folder.get() + '/' + u'Акт %s №%s-%s-%s.docx' % (
 								u'Уничтожения',

@@ -174,8 +174,6 @@ class BaseTabFrame(Frame):
 			return
 
 		act_filepathes = glob.glob(self.mainWindow.destination_folder.get()+'/*.docx')
-		if not act_filepathes:
-			return
 
 		if len(self.base_table['columns']) == self.num_of_fields:
 			self.set_base_table_cols(self.num_of_fields+1)
@@ -187,25 +185,29 @@ class BaseTabFrame(Frame):
 				entry_num = int(re.findall(r'\w+ \w+ №\d{4}-(\d+)-\w{1}.docx',act_filename)[0])
 				act_type = re.findall(r'\w+ \w+ №\d{4}-\d+-(\w{1}).docx',act_filename)[0]
 				if entry_num in acts.keys():
-					acts[entry_num].append(act_type)
+					acts[entry_num].add(act_type[0])
 				else:
-					acts[entry_num] = [act_type]
+					acts[entry_num] = set(act_type)
 			except:
-				continue				
+				continue
 
 		for row in self.base_table.get_children():
-			tags = self.base_table.item(row)['tags']
-			if not tags:
-				tags = []
 			values = self.base_table.item(row)['values']
 			index = values[0]
-			if index in acts.keys():
-				values[self.num_of_fields] = ','.join(acts[index])
-				if len(acts[index]) == 3:
-					tags.append('red_row')
-			else:
-				values[self.num_of_fields] = ''
-			self.base_table.item(row,values=values,tags=tags)
+			new_val = []
+			identifiers = [u'П',u'В',u'У']
+			for identifier in identifiers:
+				if index in acts.keys():
+					if identifier in acts[index]:
+						new_val.append(identifier)
+					else:
+						new_val.append(u'_')
+				else:
+					new_val.append(u'_')
+			values[self.num_of_fields] = ', '.join(new_val)
+			self.base_table.item(row,values=values,tags=[])
+
+		self.refreshTags()
 
 	def set_base_table_cols(self, columns):
 
@@ -372,7 +374,6 @@ class BaseTabFrame(Frame):
 
 		for entry in entries[1:]:
 			values=[u'']*self.num_of_fields
-			tags = []
 			for index_col,cell in enumerate(entry):
 				if not cell:
 					continue
@@ -381,11 +382,21 @@ class BaseTabFrame(Frame):
 				else:
 					values[index_col] = cell
 			values.append('')
-			if u'' in values[:-1]:
-				tags.append("yellow_row")
-			self.base_table.insert('', 'end', values=values, tags=tags)
+			self.base_table.insert('', 'end', values=values, tags=[])
 
 		self.refreshAutoDate()
+		self.refreshTags()
+
+	def refreshTags(self):
+
+		for item in self.base_table.get_children():
+			tags=[]
+			values = self.base_table.item(item)['values']
+			if len(values[-1]) and u'_' not in values[-1]:
+				tags.append('red_row')
+			if u'' in values[:-1]:
+				tags.append('yellow_row')
+			self.base_table.item(item,values=values,tags=tags)
 
 	def refreshAutoDate(self):
 
