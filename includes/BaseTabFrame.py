@@ -66,6 +66,7 @@ class BaseTabFrame(Frame):
 			)
 		# fields for current entry and addition mode
 		self.ADDITION_MODES = (u'Не заполнять', u'Инкремент', u'Константа', u'Выбрать из списка')
+		self.addition_modes_default = []
 		self.entry_inputs = []
 		self.entry_options = []
 		self.entry_option_vars = []
@@ -89,6 +90,7 @@ class BaseTabFrame(Frame):
 			)
 
 		self.readDateCols()
+		self.readAdditionModes()
 
 	def pack_all(self):
 
@@ -155,6 +157,25 @@ class BaseTabFrame(Frame):
 		self.aot_date_col = int(configs['Base']['aot_date_col'])-1
 		self.aoe_date_col = int(configs['Base']['aoe_date_col'])-1
 		self.date_format = configs['Base']['date_format']
+
+	def readAdditionModes(self):
+
+		'''Read default values for optionmenus for addition mode'''
+		configs = configparser.ConfigParser()
+		configs.read(self.mainWindow.configsFileName)
+
+		self.addition_modes_default = eval(configs['Base']['addition_modes'])
+
+	def saveAdditionModes(self):
+
+		'''Save default values for optionmenus for addition mode in .ini file'''
+		configs = configparser.ConfigParser()
+		configs.read(self.mainWindow.configsFileName)
+
+		configs['Base']['addition_modes'] = str([entry_option.get() for entry_option in self.entry_option_vars])
+		with open(self.mainWindow.configsFileName, 'w') as configfile:
+			configs.write(configfile)
+			configfile.close()
 
 	def sync_exist_acts(self):
 
@@ -258,9 +279,9 @@ class BaseTabFrame(Frame):
 			values = self.base_table.item(rows[-1])['values']
 			for index in range(self.num_of_fields):
 				mode = self.entry_option_vars[index].get()	# get addition mode from comboboxes
-				if mode == u'Не заполнять':
+				if mode == self.ADDITION_MODES[0]:
 					values[index] = u''
-				if mode == u'Инкремент':
+				if mode == self.ADDITION_MODES[1]:
 					value_type = type(values[index])
 					if value_type == int:
 						values[index] += 1
@@ -436,7 +457,13 @@ class BaseTabFrame(Frame):
 				)
 			)
 			var = StringVar()
-			var.set(self.ADDITION_MODES[0])
+			# set to default values from .ini file if exist
+			try:
+				mode = self.addition_modes_default[index]
+				if mode in self.ADDITION_MODES:
+					var.set(mode)
+			except:
+				var.set(self.ADDITION_MODES[0])
 			self.entry_option_vars.append(var)
 			optionmenu = OptionMenu(
 				self.entry_frame, 
@@ -449,10 +476,12 @@ class BaseTabFrame(Frame):
 			
 	def change_entry_inputs(self,event=None):
 
+		self.saveAdditionModes()
+
 		'''Change input when entry option has chaged'''
 		for index in range(self.num_of_fields):
 			cur_val = self.entry_inputs[index].get()
-			if self.entry_option_vars[index].get() == u'Выбрать из списка':
+			if self.entry_option_vars[index].get() == self.ADDITION_MODES[3]:
 				# get set of values for combobox choices, sorted alphabetically
 				values = set()
 				for row in self.base_table.get_children():

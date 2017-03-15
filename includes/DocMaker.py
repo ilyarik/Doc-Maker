@@ -201,7 +201,7 @@ class DocMaker(Tk):
 		configs['Return_act']['filename'] = self.return_act.get()
 		configs['Act_of_elimination']['filename'] = self.act_of_elimination.get()
 		
-		with open(u'%s\\USER\\configs.ini' % (self.root_dir), 'w') as configfile:
+		with open(self.configsFileName, 'w') as configfile:
 			configs.write(configfile)
 			configfile.close()
 
