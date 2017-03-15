@@ -464,7 +464,11 @@ class BaseTabFrame(Frame):
 				if not cell:
 					continue
 				if self.aot_date_col and index_col==self.aot_date_col:
-					values[index_col] = cell.strftime(self.date_format)
+					try:
+						values[index_col] = cell.strftime(self.date_format)
+					except Exception as e:
+						showerror(u'Ошибка.',u'Дата в столбце для даты должна иметь тип Дата и иметь формат %s.\n%s' % (self.date_format,e))
+						return
 				else:
 					values[index_col] = cell
 			values.append('')
@@ -589,3 +593,25 @@ class BaseTabFrame(Frame):
 				values = sorted(values, key=str.lower)
 				values = list(filter(lambda value: value.lower().startswith(self.entry_inputs[index].get().lower()),values))
 				self.entry_inputs[index]['values'] = values
+
+	def getColumnAsList(self, col_index, timedelta=None):
+
+		'''Get list of values in col_index column in base'''
+		if not self.mainWindow.base_file.get():
+			return
+
+		rows = self.base_table.get_children()
+		if not rows:
+			return
+
+		column_list = []
+		for row in rows:
+			values = self.base_table.item(row)['values']
+			if not values:
+				return
+			if col_index<0 or col_index>self.num_of_fields:
+				return
+
+			column_list.append(values[col_index])
+
+		return column_list

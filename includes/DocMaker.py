@@ -10,6 +10,7 @@ from .OptionsWindow import OptionsWindow
 from .GenerateInfoWindow import GenerateInfoWindow
 from .ReplacementsTabFrame import ReplacementsTabFrame
 from .BaseTabFrame import BaseTabFrame
+from .StatsTabFrame import StatsTabFrame
 
 class DocMaker(Tk):
 
@@ -35,6 +36,10 @@ class DocMaker(Tk):
 		self.create_aot = BooleanVar()
 		self.create_ra = BooleanVar()
 		self.create_aoe = BooleanVar()
+		# num of column from base for statistic
+		self.statsColIndex = IntVar()
+		# amount of rows to display in statistic
+		self.mostCommon = IntVar()
 
 		self.menu = Menu(self)
 		self.filemenu = Menu(self.menu,tearoff=0)
@@ -98,6 +103,7 @@ class DocMaker(Tk):
 		# aoe - act of elimination
 		self.notebook = ttk.Notebook(self)
 		self.base_frame = BaseTabFrame(self)
+		self.stats_frame = StatsTabFrame(self)
 		self.aot_frame = ReplacementsTabFrame(
 			self,
 			act_name='aot',
@@ -118,6 +124,7 @@ class DocMaker(Tk):
 			)
 
 		self.notebook.add(self.base_frame, text=u'База')
+		self.notebook.add(self.stats_frame, text=u'Статистика')
 		self.notebook.add(self.aot_frame, text=u'Акт передачи')
 		self.notebook.add(self.ra_frame, text=u'Акт возврата')
 		self.notebook.add(self.aoe_frame, text=u'Акт уничтожения')
@@ -135,6 +142,7 @@ class DocMaker(Tk):
 
 		self.read_options()
 		self.base_frame.load_base()
+		self.loadStats()
 		self.aot_frame.load_act()
 		self.ra_frame.load_act()
 		self.aoe_frame.load_act()
@@ -157,7 +165,7 @@ class DocMaker(Tk):
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True,padx=10,pady=10)
 
 		self.base_frame.pack_all()
-
+		self.stats_frame.pack_all()
 		self.aot_frame.pack_all()
 		self.ra_frame.pack_all()
 		self.aoe_frame.pack_all()
@@ -189,6 +197,8 @@ class DocMaker(Tk):
 		self.return_act.set(configs['Return_act']['filename'])
 		self.act_of_elimination.set(configs['Act_of_elimination']['filename'])
 		self.destination_folder.set(configs['DEFAULT']['destination_folder'])
+		self.statsColIndex.set(int(configs['Statistic']['col_index'])-1)
+		self.mostCommon.set(int(configs['Statistic']['most_common']))
 
 	def write_options(self):
 
@@ -196,7 +206,8 @@ class DocMaker(Tk):
 		configs.read(self.configsFileName)
 		configs['Base']['filename'] = self.base_file.get()
 		configs['DEFAULT']['destination_folder'] = self.destination_folder.get()
-
+		configs['Statistic']['col_index'] = self.statsColIndex.get()
+		configs['Statistic']['most_common'] = self.mostCommon.get()
 		configs['Act_of_transfer']['filename'] = self.act_of_transfer.get()
 		configs['Return_act']['filename'] = self.return_act.get()
 		configs['Act_of_elimination']['filename'] = self.act_of_elimination.get()
@@ -213,6 +224,14 @@ class DocMaker(Tk):
 
 		window = OptionsWindow(self)
 
+	def loadStats(self):
+
+		'''Take data from base frame and put to statistic frame'''
+		self.read_options()
+		data_list = self.base_frame.getColumnAsList(col_index=self.statsColIndex.get())
+		self.stats_frame.getStatsFromList(data_list=data_list,amount=self.mostCommon.get())
+		self.stats_frame.fillTable()
+
 	def set_base_file(self,event=None):
 
 		filename = askopenfilename(filetypes=(("XLS files", "*.xls;*.xlsx"),('All files','*.*')))
@@ -226,7 +245,6 @@ class DocMaker(Tk):
 	def generate_info(self,event=None):
 
 		'''Show this window before generate'''
-
 		if not self.base_file.get():
 			return
 
