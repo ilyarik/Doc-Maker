@@ -139,13 +139,78 @@ class BaseTabFrame(Frame):
 		'''Bind all events in a tab frame'''
 		if self.mainWindow.base_file.get():
 			self.base_table.bind("<<TreeviewSelect>>", self.setCurrentEntry)
-			for entry_input in self.entry_inputs:
+			for index,entry_input in enumerate(self.entry_inputs):
 				entry_input.bind("<Return>",self.saveEntry)
+				entry_input.bind("<Key>",lambda event=None,entry=entry_input:self.clipboard(event,entry))
 				if isinstance(entry_input,ttk.Combobox):
 					entry_input.bind('<KeyRelease>',self.change_combobox_values)
 			self.add_entry_button.bind('<Button-1>',self.add_entry)
 			self.del_entry_button.bind('<Button-1>',self.del_entry)
 			self.save_base_button.bind('<Button-1>',self.save_base)
+
+	def clipboard(self,event=None,entry=0):
+
+		'''Make clipboard great again for russian symbols'''
+		try:
+			char = event.char.encode('cp1251')
+			sym = event.keysym
+			# print(repr(char))
+			# print(repr(sym))
+
+			# ctrl+c
+			if char==b'\x03' and sym=='ntilde':
+				try:
+					selected = entry.selection_get()
+				except:
+					return
+				if not selected:
+					return
+				self.mainWindow.clipboard_clear()
+				self.mainWindow.clipboard_append(selected)
+			# ctrl+x
+			elif char==b'\x18' and sym=='division':
+				try:
+					selected = entry.selection_get()
+				except:
+					return
+				if not selected:
+					return
+				self.mainWindow.clipboard_clear()
+				self.mainWindow.clipboard_append(selected)
+				# print(entry.select_to(INSERT))
+				try:
+					first = entry.index("sel.first")
+					last = entry.index("sel.last")
+					entry.delete(first,last)
+				except Exception as e:
+					first = entry.index(INSERT)
+					last = first+len(clip_val)
+				entry.delete(first,last)
+			# ctrl+v
+			elif char==b'\x16' and sym=='igrave':
+				# cursor position in entry
+				try:
+					clip_val = self.mainWindow.selection_get(selection = "CLIPBOARD")
+				except:
+					return
+				if not clip_val:
+					return
+
+				try:
+					first = entry.index("sel.first")
+					last = entry.index("sel.last")
+					entry.delete(first,last)
+				except Exception as e:
+					first = entry.index(INSERT)
+					last = first+len(clip_val)
+				entry.insert(first,clip_val)
+			# ctrl+a
+			elif char ==b'\x01' and sym=='ocircumflex':
+				entry.select_range(0,END)
+		except Exception as e:
+			print(e)
+			showerror(u'Ошибка',u'Ошибка во время копирования в буфер обмена.\n%s' % e)
+			return
 
 	def readDateCols(self):
 

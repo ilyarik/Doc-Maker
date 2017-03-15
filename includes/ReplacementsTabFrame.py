@@ -309,8 +309,12 @@ class ReplacementsTabFrame(Frame):
 				result_value = str(self.get_result_value(index))
 				# process specific replacement for initials
 				if 'ФИО' in plain:
-					surname, name, patronymic = result_value.split()
-					result_value = '%s %s. %s.' % (surname,name[0],patronymic[0])
+					try:
+						surname, name, patronymic = result_value.split()
+						result_value = '%s %s. %s.' % (surname,name[0],patronymic[0])
+					except Exception as e:
+						showerror(u'Ошибка.',u'Не могу разделить ФИО на фамилию и инициалы для %s.\n%s' % (plain,e))
+						continue
 
 				line = line.replace(plain,result_value)
 
