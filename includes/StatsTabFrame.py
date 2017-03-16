@@ -22,7 +22,7 @@ class StatsTabFrame(Frame):
 		self.statsList = []
 
 		# it displays when files didn't selected
-		self.base_frame_plug = Label(
+		self.stats_frame_plug = Label(
 			self,
 			text=u'Место для статистики.',
 			font=self.big_font
@@ -44,9 +44,17 @@ class StatsTabFrame(Frame):
 	def pack_all(self):
 
 		'''Pack all elements in a tab frame'''
-		self.statsTableFrame.pack(side=TOP)
-		self.statsTable.pack(side=LEFT)
-		self.statsTableScroll.pack(side=RIGHT,fill=Y)
+		self.stats_frame_plug.pack_forget()
+		self.statsTableFrame.pack_forget()
+		self.statsTable.pack_forget()
+		self.statsTableScroll.pack_forget()
+
+		if self.mainWindow.base_file.get():
+			self.statsTableFrame.pack(side=TOP)
+			self.statsTable.pack(side=LEFT)
+			self.statsTableScroll.pack(side=RIGHT,fill=Y)
+		else:
+			self.stats_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
 	def bind_all(self):
 
@@ -68,7 +76,8 @@ class StatsTabFrame(Frame):
 
 		'''Fill table with statistic'''
 		self.statsTable.delete(*self.statsTable.get_children())
-		num_of_columns = (len(self.statsList[0])+1)
+
+		num_of_columns = len(self.statsList[0])+1
 		self.statsTable['columns'] = ['']*num_of_columns
 		self.statsTable.column(0,width=100)
 		self.statsTable.column(1,width=300)

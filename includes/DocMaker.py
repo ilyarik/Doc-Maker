@@ -141,7 +141,9 @@ class DocMaker(Tk):
 			)
 
 		self.read_options()
+		# start timer which refresh the base every few second, seconds parameter reads from .ini file
 		self.base_frame.load_base()
+		self.base_frame.syncBaseTimer()
 		self.loadStats()
 		self.aot_frame.load_act()
 		self.ra_frame.load_act()
@@ -152,6 +154,15 @@ class DocMaker(Tk):
 	def pack_all(self):
 
 		'''Pack all elements in a window'''
+		self.info_frame.pack_forget()
+		self.base_file_label.grid_forget()
+		self.base_file_label_text.grid_forget()
+		self.base_file_change_button.grid_forget()
+		self.create_aot_check.place_forget()
+		self.create_ra_check.place_forget()
+		self.create_aoe_check.place_forget()
+		self.generate_button.place_forget()
+
 		self.info_frame.pack(side=TOP,fill=X)
 		self.base_file_label.grid(row=1,column=0,sticky=W+N)
 		self.base_file_label_text.grid(row=1,column=1,sticky=W+N)
@@ -180,7 +191,7 @@ class DocMaker(Tk):
 
 		self.base_frame.bind_all()
 		self.bind('<Control-Return>',self.base_frame.add_entry)
-		self.bind('<Control-s>',self.base_frame.save_base)
+		# self.bind('<Control-s>',self.base_frame.openAndSave)
 
 		self.aot_frame.bind_all()
 		self.ra_frame.bind_all()
@@ -206,8 +217,6 @@ class DocMaker(Tk):
 		configs.read(self.configsFileName)
 		configs['Base']['filename'] = self.base_file.get()
 		configs['DEFAULT']['destination_folder'] = self.destination_folder.get()
-		configs['Statistic']['col_index'] = str(self.statsColIndex.get())
-		configs['Statistic']['most_common'] = str(self.mostCommon.get())
 		configs['Act_of_transfer']['filename'] = self.act_of_transfer.get()
 		configs['Return_act']['filename'] = self.return_act.get()
 		configs['Act_of_elimination']['filename'] = self.act_of_elimination.get()
@@ -227,10 +236,13 @@ class DocMaker(Tk):
 	def loadStats(self):
 
 		'''Take data from base frame and put to statistic frame'''
+		if not self.base_file.get():
+			return
 		self.read_options()
 		data_list = self.base_frame.getColumnAsList(col_index=self.statsColIndex.get())
 		self.stats_frame.getStatsFromList(data_list=data_list,amount=self.mostCommon.get())
 		self.stats_frame.fillTable()
+		self.stats_frame.pack_all()
 
 	def set_base_file(self,event=None):
 
@@ -241,6 +253,8 @@ class DocMaker(Tk):
 		self.base_file.set(filename)
 		self.write_options()
 		self.base_frame.load_base()
+		self.base_frame.syncBaseTimer()
+		self.loadStats()
 
 	def generate_info(self,event=None):
 

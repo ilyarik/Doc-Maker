@@ -31,9 +31,7 @@ def get_data_xls(filename):
 	for row in ws.rows:
 		entry = []
 		for cell in row:
-			entry.append(cell.value)
-		# if not all(entry):
-		# 	pprint(u'Запись %r заполнена не полностью!' % (''.join([str(cell.value)+' ' for cell in row])))
+			entry.append(cell.value if cell.value else '')
 		entries.append(entry)
 
 	# check if last rows is None

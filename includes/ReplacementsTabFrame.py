@@ -282,6 +282,9 @@ class ReplacementsTabFrame(Frame):
 
 	def replace(self,event=None):
 
+		if not self.mainWindow.base_file.get():
+			return
+
 		# remove tags
 		for tag in self.plain_text.tag_names():
 			self.plain_text.tag_remove(tag,1.0,END)

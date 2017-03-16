@@ -8,6 +8,7 @@ from .functions import *
 import configparser
 import glob
 import datetime
+from pprint import pprint
 
 class BaseTabFrame(Frame):
 
@@ -22,9 +23,10 @@ class BaseTabFrame(Frame):
 
 		# num of columns with date of act of transfer and act of elimination
 		# set values in self.readDateCols
-		self.aot_date_col = 0
-		self.aoe_date_col = 0
-		self.date_format = ''
+		self.aot_date_col = IntVar()
+		self.aoe_date_col = IntVar()
+		self.date_format = StringVar()
+		self.refreshPeriod = IntVar()
 
 		# it displays when files didn't selected
 		self.base_frame_plug = Label(
@@ -89,8 +91,7 @@ class BaseTabFrame(Frame):
 			font=self.default_font
 			)
 
-		self.readDateCols()
-		self.readAdditionModes()
+		self.readBaseData()
 
 	def pack_all(self):
 
@@ -146,7 +147,7 @@ class BaseTabFrame(Frame):
 					entry_input.bind('<KeyRelease>',self.change_combobox_values)
 			self.add_entry_button.bind('<Button-1>',self.add_entry)
 			self.del_entry_button.bind('<Button-1>',self.del_entry)
-			self.save_base_button.bind('<Button-1>',self.save_base)
+			# self.save_base_button.bind('<Button-1>',self.openAndSave)
 
 	def clipboard(self,event=None,entry=0):
 
@@ -154,8 +155,6 @@ class BaseTabFrame(Frame):
 		try:
 			char = event.char.encode('cp1251')
 			sym = event.keysym
-			# print(repr(char))
-			# print(repr(sym))
 
 			# ctrl+c
 			if char==b'\x03' and sym=='ntilde':
@@ -177,7 +176,6 @@ class BaseTabFrame(Frame):
 					return
 				self.mainWindow.clipboard_clear()
 				self.mainWindow.clipboard_append(selected)
-				# print(entry.select_to(INSERT))
 				try:
 					first = entry.index("sel.first")
 					last = entry.index("sel.last")
@@ -208,28 +206,22 @@ class BaseTabFrame(Frame):
 			elif char ==b'\x01' and sym=='ocircumflex':
 				entry.select_range(0,END)
 		except Exception as e:
-			print(e)
 			showerror(u'Ошибка',u'Ошибка во время копирования в буфер обмена.\n%s' % e)
 			return
 
-	def readDateCols(self):
+	def readBaseData(self):
 
 		'''Read nums of 2 cols from configs file:
 			one with date of transfer act, one with date of elimination act'''
 		configs = configparser.RawConfigParser()
 		configs.read(self.mainWindow.configsFileName)
 
-		self.aot_date_col = int(configs['Base']['aot_date_col'])-1
-		self.aoe_date_col = int(configs['Base']['aoe_date_col'])-1
-		self.date_format = configs['Base']['date_format']
-
-	def readAdditionModes(self):
-
-		'''Read default values for optionmenus for addition mode'''
-		configs = configparser.ConfigParser()
-		configs.read(self.mainWindow.configsFileName)
-
+		self.mainWindow.base_file.set(configs['Base']['filename'])
+		self.aot_date_col.set(int(configs['Base']['aot_date_col'])-1)
+		self.aoe_date_col.set(int(configs['Base']['aoe_date_col'])-1)
+		self.date_format.set(configs['Base']['date_format'])
 		self.addition_modes_default = eval(configs['Base']['addition_modes'])
+		self.refreshPeriod.set(configs['Base']['refresh_period'])
 
 	def saveAdditionModes(self):
 
@@ -335,6 +327,7 @@ class BaseTabFrame(Frame):
 			tags.append("yellow_row")
 		self.base_table.item(selitem,values=values,tags=tags)
 		self.refreshAutoDate()
+		self.save(self.mainWindow.base_file.get())
 
 	def add_entry(self,event=None):
 
@@ -370,6 +363,7 @@ class BaseTabFrame(Frame):
 		self.base_table.see(self.base_table.get_children()[-1])
 		self.refreshAutoDate()
 		self.mainWindow.status_bar['text'] = u'Запись добавлена'
+		self.save(self.mainWindow.base_file.get())
 
 	def del_entry(self,event=None):
 
@@ -382,29 +376,53 @@ class BaseTabFrame(Frame):
 				self.base_table.delete(selitem)
 				self.num_of_entries-=1
 		self.mainWindow.status_bar['text'] = u'Запись удалена'
+		self.save(self.mainWindow.base_file.get())
 
+	def syncBaseTimer(self):
+
+		'''Load base every few seconds'''
+		self.after(self.refreshPeriod.get(),self.syncBaseTimer)
+		if not self.mainWindow.base_file.get():
+			return
+		self.syncBase()
+
+	def syncBase(self):
+
+		'''Read options and load base'''
+		self.readBaseData()
+		try:
+			from_base = get_data_xls(self.mainWindow.base_file.get())
+			from_table = self.getAllEntriesAsList(with_headings=True)
+			# pprint(repr(from_base))
+			# pprint(repr(from_table))
+			if from_base != from_table:
+				diff = [item for item in from_base if item not in from_table]
+				diff_indexes = [str(row[0]) for row in diff]
+				self.load_base()
+				self.mainWindow.status_bar['text'] = u'База обновлена'
+				showinfo(u'Синхронизация.',u'База обновлена.\nОбновленные строки: %s.' % ','.join(diff_indexes))
+		except Exception as e:
+			showerror(u'Ошибка!',u'Ошибка во время синхронизации.\n%s' % e)
+			return
+		
 	def load_base(self,event=None):
 
 		if not self.mainWindow.base_file.get():
 			return
 
-		try:
-			entries = get_data_xls(self.mainWindow.base_file.get())
-		except Exception as e:
-			showerror(u'Ошибка!',e)
-			return
+		entries = get_data_xls(self.mainWindow.base_file.get())
 
 		if not entries:
 			showerror(u'Ошибка!',u'Пустой файл базы.')
 			return
 		
-		self.mainWindow.base_file_label_text['text'] = get_truncated_line(self.mainWindow.base_file.get(),40)
 		self.num_of_entries = len(entries)
 		self.num_of_fields = len(entries[0])
 		self.set_base_table_cols(self.num_of_fields+1)
 
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
+
 
 		# change variants in choice fields into tabs
 		if self.mainWindow.act_of_transfer.get():
@@ -430,11 +448,21 @@ class BaseTabFrame(Frame):
 		self.pack_all()
 		self.bind_all()
 
+		self.mainWindow.base_file_label_text['text'] = get_truncated_line(self.mainWindow.base_file.get(),40)
 		self.mainWindow.status_bar['text'] = u'База Загружена'
 
-	def save_base(self,event=None):
+	def openAndSave(self,event=None):
 
+		'''Open .xlsx and save it'''
 		filename = asksaveasfilename(filetypes=(("XLS files", "*.xls;*.xlsx"),('All files','*.*')))
+		if not filename:
+			return
+
+		self.save(filename)
+
+	def save(self,filename):
+
+		'''Save to filename'''
 		if not filename:
 			return
 		rows = self.base_table.get_children()
@@ -443,13 +471,23 @@ class BaseTabFrame(Frame):
 		entries = []
 		for row in rows:
 			entry = self.base_table.item(row)['values'][:-1]
-			if self.aot_date_col:
-				entry[self.aot_date_col] = datetime.datetime.strptime(entry[self.aot_date_col], self.date_format).date()
-			if self.aoe_date_col:
-				entry[self.aoe_date_col] = datetime.datetime.strptime(entry[self.aoe_date_col], self.date_format).date()
-			print(entry)
+			# format date columns before put into xlsx
+			try:
+				aot_value = self.aot_date_col.get()
+				if aot_value:
+					entry[aot_value] = datetime.datetime.strptime(entry[aot_value], self.date_format.get()).date()
+				aoe_value = self.aoe_date_col.get()
+				if aoe_value:
+					entry[aoe_value] = datetime.datetime.strptime(entry[aoe_value], self.date_format.get()).date()
+			except Exception as e:
+				showerror(u'Ошибка.',u'Ошибка во время форматирования столбца с датой перед сохранением.\n%s' % e)
+				return
 			entries.append(entry)
-		save_xls_data(filename,entries)
+		try:
+			save_xls_data(filename,entries)
+		except Exception as e:
+			showerror(u'Ошибка.',u'Ошибка во время записи в файл %s.\n%s' % (filename,e))
+			return
 		self.mainWindow.status_bar['text'] = u'База сохранена'
 
 	def fill_table(self, entries):
@@ -468,11 +506,11 @@ class BaseTabFrame(Frame):
 			for index_col,cell in enumerate(entry):
 				if not cell:
 					continue
-				if self.aot_date_col and index_col==self.aot_date_col:
+				if self.aot_date_col.get() and index_col==self.aot_date_col.get():
 					try:
-						values[index_col] = cell.strftime(self.date_format)
+						values[index_col] = cell.strftime(self.date_format.get())
 					except Exception as e:
-						showerror(u'Ошибка.',u'Дата в столбце для даты должна иметь тип Дата и иметь формат %s.\n%s' % (self.date_format,e))
+						showerror(u'Ошибка.',u'Дата в столбце для даты должна иметь тип Дата и формат %s.\n%s' % (self.date_format.get(),e))
 						return
 				else:
 					values[index_col] = cell
@@ -496,27 +534,27 @@ class BaseTabFrame(Frame):
 	def refreshAutoDate(self):
 
 		'''Check all cells where need to input date of aot and insert aoe date'''
-		self.readDateCols()
+		self.readBaseData()
 
-		if self.aot_date_col<1 or self.aot_date_col>self.num_of_fields:
+		if self.aot_date_col.get()<1 or self.aot_date_col.get()>self.num_of_fields:
 			return
 
-		if self.aoe_date_col<1 or self.aoe_date_col>self.num_of_fields:
+		if self.aoe_date_col.get()<1 or self.aoe_date_col.get()>self.num_of_fields:
 			return
 
 		items = self.base_table.get_children()
 		for row_index,item in enumerate(items):
 			values = self.base_table.item(item)['values']
-			date = values[self.aot_date_col]
+			date = values[self.aot_date_col.get()]
 			if not date:
 				continue
 			if type(date) != datetime.datetime:
 				try:
-					date = datetime.datetime.strptime(date, self.date_format)
+					date = datetime.datetime.strptime(date, self.date_format.get())
 				except Exception as e:
-					showerror(u'Ошибка.',u'Неверный формат даты (столбец %r) в строке %r. Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col+1,row_index+1,e))
+					showerror(u'Ошибка.',u'Неверный формат даты (столбец %r) в строке %r. Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col.get()+1,row_index+1,e))
 					break
-			values[self.aoe_date_col] = add_date(date,years=1,months=3).strftime(self.date_format)
+			values[self.aoe_date_col.get()] = add_date(date,years=1,months=3).strftime(self.date_format.get())
 			self.base_table.item(item,values=values)
 
 	def create_entry_inputs(self,amount):
@@ -611,6 +649,7 @@ class BaseTabFrame(Frame):
 
 		column_list = []
 		for row in rows:
+
 			values = self.base_table.item(row)['values']
 			if not values:
 				return
@@ -620,3 +659,33 @@ class BaseTabFrame(Frame):
 			column_list.append(values[col_index])
 
 		return column_list
+
+	def getAllEntriesAsList(self,with_headings=False):
+
+		'''Read all rows in table and put values into list, put these lists into other list and return it'''
+		rows = self.base_table.get_children()
+		if not rows:
+			return []
+		entries = []
+		if with_headings:
+			entry = []
+			for col_index in range(self.num_of_fields):
+				raw_heading = self.base_table.heading(col_index)['text']
+				heading = re.sub(r'^(\d+. )','',raw_heading)
+				entry.append(heading)
+			entries.append(entry)
+		for row in rows:
+			entry = self.base_table.item(row)['values'][:-1]
+			# format date columns before put into xlsx
+			try:
+				aot_value = self.aot_date_col.get()
+				if aot_value:
+					entry[aot_value] = datetime.datetime.strptime(entry[aot_value], self.date_format.get())
+				aoe_value = self.aoe_date_col.get()
+				if aoe_value:
+					entry[aoe_value] = datetime.datetime.strptime(entry[aoe_value], self.date_format.get())
+			except Exception as e:
+				showerror(u'Ошибка.',u'Ошибка во время форматирования столбца при получении значений из таблицы.\n%s' % e)
+				return
+			entries.append(entry)
+		return entries
