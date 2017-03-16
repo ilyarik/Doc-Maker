@@ -282,6 +282,9 @@ class DocMaker(Tk):
 
 		# get data from table
 		entries = [self.base_frame.base_table.item(selitem)['values'] for selitem in self.base_frame.base_table.selection()]
+		if [entry for entry in entries if not all(entry)]:
+			showerror(u'Ошибка.', u'Есть незаполненные значения в строке.')
+			return
 		# get replacements for selected rows in base_table and generate new files
 		for index_row,entry in enumerate(entries):
 			if self.create_aot.get():

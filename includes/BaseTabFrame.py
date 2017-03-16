@@ -131,7 +131,7 @@ class BaseTabFrame(Frame):
 			self.action_frame.pack(side=LEFT,fill=Y)
 			self.add_entry_button.grid(row=4,column=2,sticky=W+N+E+S)
 			self.del_entry_button.grid(row=5,column=2,sticky=W+N+E+S)
-			self.save_base_button.grid(row=6,column=2,sticky=W+N+E+S)
+			# self.save_base_button.grid(row=6,column=2,sticky=W+N+E+S)
 		else:
 			self.base_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
@@ -585,6 +585,7 @@ class BaseTabFrame(Frame):
 				)
 			optionmenu.configure(width=16)
 			self.entry_options.append(optionmenu)
+		self.change_entry_inputs()
 			
 	def change_entry_inputs(self,event=None):
 
