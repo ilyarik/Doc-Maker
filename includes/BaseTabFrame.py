@@ -121,7 +121,7 @@ class BaseTabFrame(Frame):
 			for index, entry_input in enumerate(self.entry_inputs):
 				Label(
 					self.entry_frame,
-					text=self.base_table.heading(index)['text'],
+					text=get_truncated_line(self.base_table.heading(index)['text'],20),
 					font=self.small_font
 					).grid(row=index+1,column=0,sticky=W+N)
 				entry_input.grid(row=index+1,column=1,sticky=W+N)
@@ -483,6 +483,8 @@ class BaseTabFrame(Frame):
 				showerror(u'Ошибка.',u'Ошибка во время форматирования столбца с датой перед сохранением.\n%s' % e)
 				return
 			entries.append(entry)
+		# fill rows after base with None values
+		[entries.append([None]*self.num_of_fields) for _ in range(100)]
 		try:
 			save_xls_data(filename,entries)
 		except Exception as e:
