@@ -1,5 +1,6 @@
-from openpyxl import load_workbook, Workbook
+from openpyxl import load_workbook,Workbook
 import datetime
+import os.path
 from pprint import pprint
 from docx import Document
 from docx.shared import Inches
@@ -55,13 +56,17 @@ def get_data_xls(filename):
 
 def save_xls_data(filename, entries):
 
-	wb = Workbook()
+
+	if os.path.isfile(filename):
+		wb = load_workbook(filename)
+	else:
+		wb = Workbook()
 	ws = wb.active
 	ws.title = u'База'
 
 	for row_index,entry in enumerate(entries):
 		for col_index,value in enumerate(entry):
-			ws.cell(row=row_index+1,column=col_index+1).value = value
+			ws.cell(row=row_index+2,column=col_index+1).value = value
 
 	wb.save(filename)
 

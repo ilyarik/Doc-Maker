@@ -443,6 +443,11 @@ class BaseTabFrame(Frame):
 		entries = []
 		for row in rows:
 			entry = self.base_table.item(row)['values'][:-1]
+			if self.aot_date_col:
+				entry[self.aot_date_col] = datetime.datetime.strptime(entry[self.aot_date_col], self.date_format).date()
+			if self.aoe_date_col:
+				entry[self.aoe_date_col] = datetime.datetime.strptime(entry[self.aoe_date_col], self.date_format).date()
+			print(entry)
 			entries.append(entry)
 		save_xls_data(filename,entries)
 		self.mainWindow.status_bar['text'] = u'База сохранена'

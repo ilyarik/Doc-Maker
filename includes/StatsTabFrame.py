@@ -63,7 +63,6 @@ class StatsTabFrame(Frame):
 			stats_list.append(OrderedDict(name=name,total=total,percentage=percentage))
 
 		self.statsList = stats_list
-		pprint(self.statsList)
 
 	def fillTable(self):
 
@@ -81,10 +80,10 @@ class StatsTabFrame(Frame):
 		self.statsTable.heading(3,text='Процент')
 		self.statsTable.update()
 		for index, stats_entry in enumerate(self.statsList):
-			print(index)
-			print(stats_entry)
+			# print(index)
+			# print(stats_entry)
 			values=[u'']*num_of_columns
-			values[0] = index
+			values[0] = index+1
 			values[1] = stats_entry['name']
 			values[2] = stats_entry['total']
 			values[3] = stats_entry['percentage']
