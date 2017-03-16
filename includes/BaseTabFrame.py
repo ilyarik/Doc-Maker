@@ -326,7 +326,12 @@ class BaseTabFrame(Frame):
 		if u'' in values[:-1]:
 			tags.append("yellow_row")
 		self.base_table.item(selitem,values=values,tags=tags)
-		self.refreshAutoDate()
+		try:
+			self.refreshAutoDate()
+		except Exception as e:
+			self.base_table.item(selitem,values=values_tmp,tags=tags)
+			showerror(u'Ошибка.',u'Неверный формат даты (столбец %r). Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col.get()+1,e))
+			return
 		self.save(self.mainWindow.base_file.get())
 
 	def add_entry(self,event=None):
@@ -551,11 +556,7 @@ class BaseTabFrame(Frame):
 			if not date:
 				continue
 			if type(date) != datetime.datetime:
-				try:
-					date = datetime.datetime.strptime(date, self.date_format.get())
-				except Exception as e:
-					showerror(u'Ошибка.',u'Неверный формат даты (столбец %r) в строке %r. Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col.get()+1,row_index+1,e))
-					break
+				date = datetime.datetime.strptime(date, self.date_format.get())
 			values[self.aoe_date_col.get()] = add_date(date,years=1,months=3).strftime(self.date_format.get())
 			self.base_table.item(item,values=values)
 
