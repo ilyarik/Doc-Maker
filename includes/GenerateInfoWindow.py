@@ -89,7 +89,7 @@ class GenerateInfoWindow(Toplevel):
 				)
 		self.destination_folder_label_text = Label(
 				self.options_frame,
-				text=get_truncated_line(self.destination_folder.get(),60),
+				text=get_truncated_line(self.destination_folder.get(),45),
 				padx=20,
 				pady=5,
 				anchor = "ne",

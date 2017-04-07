@@ -152,6 +152,8 @@ class BaseTabFrame(Frame):
 	def clipboard(self,event=None,entry=0):
 
 		'''Make clipboard great again for russian symbols'''
+		if not entry:
+			return
 		try:
 			char = event.char.encode('cp1251')
 			sym = event.keysym
@@ -205,8 +207,7 @@ class BaseTabFrame(Frame):
 			# ctrl+a
 			elif char ==b'\x01' and sym=='ocircumflex':
 				entry.select_range(0,END)
-		except Exception as e:
-			showerror(u'Ошибка',u'Ошибка во время копирования в буфер обмена.\n%s' % e)
+		except:
 			return
 
 	def readBaseData(self):

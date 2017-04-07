@@ -33,6 +33,7 @@ class ReplacementsTabFrame(Frame):
 			)
 		self.plain_text = Text(
 			self.plain_text_frame,
+			state=DISABLED,
 			width=45,
 			font=self.mainWindow.default_font,
 			height=30
@@ -47,6 +48,7 @@ class ReplacementsTabFrame(Frame):
 			font=self.mainWindow.default_font)
 		self.result_text = Text(
 			self.result_text_frame,
+			state=DISABLED,
 			width=45,
 			font=self.mainWindow.default_font,
 			height=30
@@ -126,10 +128,98 @@ class ReplacementsTabFrame(Frame):
 
 		'''Bind all events in a tab frame'''
 		if self.act_var.get():
+			self.plain_text.bind("<Key>",lambda event=None,text=self.plain_text:self.text_clipboard(event,text))
+			self.result_text.bind("<Key>",lambda event=None,text=self.plain_text:self.text_clipboard(event,text))
 			self.add_replacement_button.bind('<Button-1>',self.add_replacement)
 			self.replacement_frame.bind("<Configure>", self.replaceFrameConfigure)		# bind mouse scroll
 			[primary_val.bind("<Return>",self.replace) for primary_val in self.primary_values_for_replacement]
+			[primary_val.bind("<Key>",lambda event=None,entry=primary_val:self.entry_clipboard(event,entry)) for primary_val in self.primary_values_for_replacement]
 			[new_val.bind("<Return>",self.replace) for new_val in self.new_values_for_replacement]
+			[new_val.bind("<Key>",lambda event=None,entry=new_val:self.entry_clipboard(event,entry)) for new_val in self.new_values_for_replacement]
+
+	def text_clipboard(self,event=None,text=0):
+
+		'''Make clipboard great again for russian symbols'''
+		if not text:
+			return
+		try:
+			char = event.char.encode('cp1251')
+			sym = event.keysym
+
+			# ctrl+c
+			if char==b'\x03' and sym=='ntilde':
+				try:
+					selected = text.selection_get()
+				except:
+					return
+				if not selected:
+					return
+				self.mainWindow.clipboard_clear()
+				self.mainWindow.clipboard_append(selected)
+		
+		except:
+			return
+
+	def entry_clipboard(self,event=None,entry=0):
+
+		'''Make clipboard great again for russian symbols'''
+		if not entry:
+			return
+		try:
+			char = event.char.encode('cp1251')
+			sym = event.keysym
+
+			# ctrl+c
+			if char==b'\x03' and sym=='ntilde':
+				try:
+					selected = entry.selection_get()
+				except:
+					return
+				if not selected:
+					return
+				self.mainWindow.clipboard_clear()
+				self.mainWindow.clipboard_append(selected)
+			# ctrl+x
+			elif char==b'\x18' and sym=='division':
+				try:
+					selected = entry.selection_get()
+				except:
+					return
+				if not selected:
+					return
+				self.mainWindow.clipboard_clear()
+				self.mainWindow.clipboard_append(selected)
+				try:
+					first = entry.index("sel.first")
+					last = entry.index("sel.last")
+					entry.delete(first,last)
+				except Exception as e:
+					first = entry.index(INSERT)
+					last = first+len(clip_val)
+				entry.delete(first,last)
+			# ctrl+v
+			elif char==b'\x16' and sym=='igrave':
+				# cursor position in entry
+				try:
+					clip_val = self.mainWindow.selection_get(selection = "CLIPBOARD")
+				except:
+					return
+				if not clip_val:
+					return
+
+				try:
+					first = entry.index("sel.first")
+					last = entry.index("sel.last")
+					entry.delete(first,last)
+				except Exception as e:
+					first = entry.index(INSERT)
+					last = first+len(clip_val)
+				entry.insert(first,clip_val)
+			# ctrl+a
+			elif char ==b'\x01' and sym=='ocircumflex':
+				entry.select_range(0,END)
+		except:
+			return
 
 	def load_act(self,event=None):
 
@@ -149,10 +239,20 @@ class ReplacementsTabFrame(Frame):
 			return
 
 		# clear text fields and fill it
+
+		# make text fields editable
+		self.plain_text.config(state=NORMAL)
+		self.result_text.config(state=NORMAL)
+
 		self.plain_text.delete(1.0,END)
 		self.result_text.delete(1.0,END)
 		for line in doc_text:
 			self.plain_text.insert(END,line+'\n')
+
+		# make text fields not editable
+		self.plain_text.config(state=DISABLED)
+		self.result_text.config(state=DISABLED)
+
 		self.replace()			# fill result text field and add tags
 
 		# delete replacements if exists and init new replacements
@@ -292,8 +392,16 @@ class ReplacementsTabFrame(Frame):
 			self.result_text.tag_remove(tag,1.0,END)
 		# copy text from plain to result
 		text = self.plain_text.get(1.0,END)
+
+		# make text field editable
+		self.result_text.config(state=NORMAL)
+
 		self.result_text.delete(1.0,END)
 		self.result_text.insert(1.0,text)
+
+		# make text field not editable
+		self.result_text.config(state=DISABLED)
+
 		plain_lines = text.split('\n')
 		for index_line,line in enumerate(plain_lines):
 
@@ -322,8 +430,39 @@ class ReplacementsTabFrame(Frame):
 				line = line.replace(plain,result_value)
 
 				# rewrite line on new replaced line
+				# make text field editable
+				self.result_text.config(state=NORMAL)
+
 				self.result_text.delete(start_of_line,end_of_line)
 				self.result_text.insert(start_of_line,line)
+
+				# make text field not editable
+				self.result_text.config(state=DISABLED)
+
+		for index_line,line in enumerate(plain_lines):
+
+			if not line:
+				continue
+
+			start_of_line = float(index_line+1)
+			end_of_line = '%r.end' % (index_line+1)
+
+			for index in range(self.num_of_replacements):
+				plain = str(self.primary_values_for_replacement[index].get())
+				if not plain:
+					continue
+				if plain not in line:
+					continue
+				result_value = str(self.get_result_value(index))
+
+				# process specific replacement for initials
+				if 'ФИО' in plain:
+					try:
+						surname, name, patronymic = result_value.split()
+						result_value = '%s %s. %s.' % (surname,name[0],patronymic[0])
+					except Exception as e:
+						showerror(u'Ошибка.',u'Не могу разделить ФИО на фамилию и инициалы для %s.\n%s' % (plain,e))
+						continue
 
 				# add tags to plain text
 				search_start = 1.0
