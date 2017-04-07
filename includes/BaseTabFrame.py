@@ -21,6 +21,9 @@ class BaseTabFrame(Frame):
 		self.default_font = self.mainWindow.default_font
 		self.big_font = self.mainWindow.big_font
 
+		# Flag which true when syncronization enabled
+		self.syncronizing = True
+
 		# num of columns with date of act of transfer and act of elimination
 		# set values in self.readDateCols
 		self.aot_date_col = IntVar()
@@ -343,9 +346,9 @@ class BaseTabFrame(Frame):
 			values = self.base_table.item(rows[-1])['values']
 			for index in range(self.num_of_fields):
 				mode = self.entry_option_vars[index].get()	# get addition mode from comboboxes
-				if mode == self.ADDITION_MODES[0]:
+				if mode == self.ADDITION_MODES[0] or mode == self.ADDITION_MODES[3]:
 					values[index] = u''
-				if mode == self.ADDITION_MODES[1]:
+				elif mode == self.ADDITION_MODES[1]:
 					value_type = type(values[index])
 					if value_type == int:
 						values[index] += 1
@@ -359,6 +362,7 @@ class BaseTabFrame(Frame):
 									values[index])
 						except Exception as e:
 							showerror(u'Ошибка!', e)
+
 		else:
 			values = ['']*self.num_of_fields
 		if u'' in values:
@@ -387,6 +391,8 @@ class BaseTabFrame(Frame):
 	def syncBaseTimer(self):
 
 		'''Load base every few seconds'''
+		if not self.syncronizing:
+			return
 		self.after(self.refreshPeriod.get(),self.syncBaseTimer)
 		if not self.mainWindow.base_file.get():
 			return
@@ -398,17 +404,18 @@ class BaseTabFrame(Frame):
 		self.readBaseData()
 		try:
 			from_base = get_data_xls(self.mainWindow.base_file.get())
-			from_table = self.getAllEntriesAsList(with_headings=True)
+			from_table = self.getAllEntriesAsList()
 			# pprint(repr(from_base))
 			# pprint(repr(from_table))
-			if from_base != from_table:
+			if from_base[1:] != from_table:
 				diff = [item for item in from_base if item not in from_table]
 				diff_indexes = [str(row[0]) for row in diff]
 				self.load_base()
 				self.mainWindow.status_bar['text'] = u'База обновлена'
 				showinfo(u'Синхронизация.',u'База обновлена.\nОбновленные строки: %s.' % ','.join(diff_indexes))
 		except Exception as e:
-			showerror(u'Ошибка!',u'Ошибка во время синхронизации.\n%s' % e)
+			self.syncronizing = False
+			showerror(u'Ошибка!',u'Ошибка во время синхронизации. Синхронизация отключена.\n%s' % e)
 			return
 		
 	def load_base(self,event=None):
@@ -485,8 +492,8 @@ class BaseTabFrame(Frame):
 				aoe_value = self.aoe_date_col.get()
 				if aoe_value:
 					entry[aoe_value] = datetime.datetime.strptime(entry[aoe_value], self.date_format.get()).date()
-			except Exception as e:
-				showerror(u'Ошибка.',u'Ошибка во время форматирования столбца с датой перед сохранением.\n%s' % e)
+			except:
+				# showerror(u'Ошибка.',u'Ошибка во время форматирования столбца с датой перед сохранением.\n%s' % e)
 				return
 			entries.append(entry)
 		# fill rows after base with None values
@@ -665,20 +672,14 @@ class BaseTabFrame(Frame):
 
 		return column_list
 
-	def getAllEntriesAsList(self,with_headings=False):
+	def getAllEntriesAsList(self):
 
 		'''Read all rows in table and put values into list, put these lists into other list and return it'''
 		rows = self.base_table.get_children()
 		if not rows:
 			return []
 		entries = []
-		if with_headings:
-			entry = []
-			for col_index in range(self.num_of_fields):
-				raw_heading = self.base_table.heading(col_index)['text']
-				heading = re.sub(r'^(\d+. )','',raw_heading)
-				entry.append(heading)
-			entries.append(entry)
+		
 		for row in rows:
 			entry = self.base_table.item(row)['values'][:-1]
 			# format date columns before put into xlsx
@@ -689,8 +690,7 @@ class BaseTabFrame(Frame):
 				aoe_value = self.aoe_date_col.get()
 				if aoe_value:
 					entry[aoe_value] = datetime.datetime.strptime(entry[aoe_value], self.date_format.get())
-			except Exception as e:
-				showerror(u'Ошибка.',u'Ошибка во время форматирования столбца при получении значений из таблицы.\n%s' % e)
+			except:
 				return
 			entries.append(entry)
 		return entries
