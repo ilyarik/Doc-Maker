@@ -112,8 +112,8 @@ class ReplacementsTabFrame(Frame):
 			self.result_text_frame.pack(side=RIGHT,fill=Y)
 			self.result_text_label.pack(side=TOP)
 			self.result_text.pack(side=RIGHT,fill=Y)
-			self.replacement_frameScroll.pack(side=RIGHT, fill=Y)
-			self.replacement_canvas.pack(side=LEFT,fill=BOTH,expand=True)
+			
+			self.replacement_canvas.pack(side=LEFT,fill=BOTH)
 			for index in range(self.num_of_replacements):
 				self.primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
 				self.labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
@@ -121,6 +121,7 @@ class ReplacementsTabFrame(Frame):
 			for index, replacement_separator in enumerate(self.replacements_separators):
 				replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
 			self.add_replacement_button.grid(row=self.num_of_replacements*5,column=0,pady=10,sticky=N)
+			self.replacement_frameScroll.pack(side=LEFT, fill=Y)
 		else:
 			self.frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 

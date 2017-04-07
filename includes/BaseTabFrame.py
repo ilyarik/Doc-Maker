@@ -5,6 +5,7 @@ from tkinter.font import Font
 from tkinter import *
 import tkinter.ttk as ttk
 from .functions import *
+from .AutocompleteCombobox import AutocompleteCombobox
 import configparser
 import glob
 import datetime
@@ -146,8 +147,6 @@ class BaseTabFrame(Frame):
 			for index,entry_input in enumerate(self.entry_inputs):
 				entry_input.bind("<Return>",self.saveEntry)
 				entry_input.bind("<Key>",lambda event=None,entry=entry_input:self.clipboard(event,entry))
-				if isinstance(entry_input,ttk.Combobox):
-					entry_input.bind('<KeyRelease>',self.change_combobox_values)
 			self.add_entry_button.bind('<Button-1>',self.add_entry)
 			self.del_entry_button.bind('<Button-1>',self.del_entry)
 			# self.save_base_button.bind('<Button-1>',self.openAndSave)
@@ -337,6 +336,7 @@ class BaseTabFrame(Frame):
 			showerror(u'Ошибка.',u'Неверный формат даты (столбец %r). Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col.get()+1,e))
 			return
 		self.save(self.mainWindow.base_file.get())
+		self.change_combobox_values()
 
 	def add_entry(self,event=None):
 
@@ -374,6 +374,7 @@ class BaseTabFrame(Frame):
 		self.refreshAutoDate()
 		self.mainWindow.status_bar['text'] = u'Запись добавлена'
 		self.save(self.mainWindow.base_file.get())
+		self.change_combobox_values()
 
 	def del_entry(self,event=None):
 
@@ -385,8 +386,9 @@ class BaseTabFrame(Frame):
 			for selitem in selitems:
 				self.base_table.delete(selitem)
 				self.num_of_entries-=1
-		self.mainWindow.status_bar['text'] = u'Запись удалена'
-		self.save(self.mainWindow.base_file.get())
+			self.mainWindow.status_bar['text'] = u'Запись удалена'
+			self.save(self.mainWindow.base_file.get())
+			self.change_combobox_values()
 
 	def syncBaseTimer(self):
 
@@ -614,12 +616,12 @@ class BaseTabFrame(Frame):
 						values.add(value)	
 				values = sorted(values, key=str.lower)
 				values = list(filter(lambda value: value.lower().startswith(self.entry_inputs[index].get().lower()),values))
-				item = ttk.Combobox(
+				item = AutocompleteCombobox(
 						self.entry_frame,
 						width=23,
-						font=self.default_font,
-						values=values
+						font=self.default_font
 					)
+				item.set_completion_list(values)
 				item.set(cur_val)
 			else:
 				item = Entry(
@@ -637,17 +639,20 @@ class BaseTabFrame(Frame):
 	def change_combobox_values(self, event=None):
 
 		'''Autocompletion for comboboxes'''
+
 		for index in range(self.num_of_fields):
 			# filter combobox input values
-			if isinstance(self.entry_inputs[index], ttk.Combobox):
+			if isinstance(self.entry_inputs[index], AutocompleteCombobox):
+
 				values = set()
 				for row in self.base_table.get_children():
 					value = str(self.base_table.item(row)['values'][index])
 					if value:
 						values.add(value)
 				values = sorted(values, key=str.lower)
-				values = list(filter(lambda value: value.lower().startswith(self.entry_inputs[index].get().lower()),values))
-				self.entry_inputs[index]['values'] = values
+				# values = list(filter(lambda value: value.lower().startswith(self.entry_inputs[index].get().lower()),values))
+				# self.entry_inputs[index]['values'] = values
+				self.entry_inputs[index].set_completion_list(values)
 
 	def getColumnAsList(self, col_index, timedelta=None):
 

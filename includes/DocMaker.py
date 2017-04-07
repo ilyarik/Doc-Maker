@@ -19,6 +19,7 @@ class DocMaker(Tk):
 		Tk.__init__(self)
 
 		self.geometry('1200x800+50+10')
+		self.minsize(1000,700)
 		self.title(u'Составитель актов 2000')
 		self.update()
 
