@@ -6,9 +6,11 @@ from tkinter import *
 import tkinter.ttk as ttk
 from .functions import *
 from .AutocompleteCombobox import AutocompleteCombobox
+from .Calendar import Calendar
 import configparser
 import glob
 import datetime
+import calendar
 
 class BaseTabFrame(Frame):
 
@@ -26,7 +28,6 @@ class BaseTabFrame(Frame):
 		self.aot_date_col = IntVar()
 		self.aoe_date_col = IntVar()
 		self.date_format = StringVar()
-		self.refreshPeriod = IntVar()
 
 		# it displays when files didn't selected
 		self.base_frame_plug = Label(
@@ -67,6 +68,12 @@ class BaseTabFrame(Frame):
 			text=u'При добавлении:',
 			font=self.small_font
 			)
+		self.aotDateButton = Button(
+			self.entry_frame,
+			text=u'Дата',
+			font=self.small_font
+			)
+
 		# fields for current entry and addition mode
 		self.ADDITION_MODES = (u'Не заполнять', u'Инкремент', u'Константа', u'Выбрать из списка')
 		self.addition_modes_default = []
@@ -120,15 +127,24 @@ class BaseTabFrame(Frame):
 			self.entry_label.grid(row=0,column=1,sticky=W+N)
 			self.modes_label.grid(row=0,column=2,sticky=W+N,padx=10)
 			for index, entry_input in enumerate(self.entry_inputs):
+				# don't display auto date column
+				if index == self.aoe_date_col.get():
+					continue
 				Label(
 					self.entry_frame,
 					text=get_truncated_line(self.base_table.heading(index)['text'],20),
 					font=self.small_font
 					).grid(row=index+1,column=0,sticky=W+N)
-				entry_input.grid(row=index+1,column=1,sticky=W+N)
+				entry_input.grid(row=index+1,column=1,sticky=W)
 				entry_input.lift()												# set tab order
 			for index, entry_option in enumerate(self.entry_options):
-				entry_option.grid(row=index+1,column=2,sticky=W+N+S,padx=10)
+				# check entry is autocompletable
+				if index == self.aot_date_col.get():
+					self.aotDateButton.grid(row=index+1,column=2,sticky=W+E)
+				elif index == self.aoe_date_col.get():
+					continue
+				else:
+					entry_option.grid(row=index+1,column=2,sticky=W+N+S)
 			self.action_frame.pack(side=LEFT,fill=Y)
 			self.add_entry_button.grid(row=4,column=2,sticky=W+N+E+S)
 			self.del_entry_button.grid(row=5,column=2,sticky=W+N+E+S)
@@ -143,6 +159,7 @@ class BaseTabFrame(Frame):
 			for index,entry_input in enumerate(self.entry_inputs):
 				entry_input.bind("<Return>",self.saveEntry)
 				entry_input.bind("<Key>",lambda event=None,entry=entry_input:self.clipboard(event,entry))
+			self.aotDateButton.bind('<Button-1>',self.setAotDate)
 			self.add_entry_button.bind('<Button-1>',self.addEntry)
 			self.del_entry_button.bind('<Button-1>',self.delEntry)
 
@@ -291,6 +308,15 @@ class BaseTabFrame(Frame):
 				width=col_width
 			)
 
+	def setAotDate(self,event=None):
+
+		toplevel = Toplevel(self.mainWindow)
+		entry = self.entry_inputs[self.aot_date_col.get()]
+		ttkcal = Calendar(entry,self.date_format.get(),master=toplevel)
+		ttkcal.pack(expand=1, fill='both')
+		toplevel.update()
+		toplevel.minsize(toplevel.winfo_reqwidth(), toplevel.winfo_reqheight())
+
 	def setCurrentEntry(self,event=None):
 
 		selitems = self.base_table.selection()
@@ -438,7 +464,7 @@ class BaseTabFrame(Frame):
 			return
 
 		if self.num_of_fields != len(entries[0]):
-			showerror('Ошибка!','В файле базы изменилось количество столбцов. Перезагрузите программу.')
+			showerror('Ошибка!','Изменился файл базы. Перезагрузите программу.')
 		self.num_of_entries = len(entries)
 
 		self.base_table.delete(*self.base_table.get_children())
@@ -569,15 +595,15 @@ class BaseTabFrame(Frame):
 				*self.ADDITION_MODES,
 				command = self.change_entry_inputs
 				)
-			optionmenu.configure(width=16)
+			optionmenu.configure(width=15)
 			self.entry_options.append(optionmenu)
 		self.change_entry_inputs()
 			
 	def change_entry_inputs(self,event=None):
 
+		'''Change input when entry option has chaged'''
 		self.saveAdditionModes()
 
-		'''Change input when entry option has chaged'''
 		for index in range(self.num_of_fields):
 			cur_val = self.entry_inputs[index].get()
 			if self.entry_option_vars[index].get() == self.ADDITION_MODES[3]:
