@@ -11,6 +11,8 @@ from .GenerateInfoWindow import GenerateInfoWindow
 from .ReplacementsTabFrame import ReplacementsTabFrame
 from .BaseTabFrame import BaseTabFrame
 from .StatsTabFrame import StatsTabFrame
+from .BaseFileEventHandler import BaseFileEventHandler
+from watchdog.observers import Observer
 
 class DocMaker(Tk):
 
@@ -141,10 +143,16 @@ class DocMaker(Tk):
 			padx=10
 			)
 
+		# init syncronization manager
+		self.baseSyncObserver = Observer()
+
+		# read options from .ini file
 		self.read_options()
-		# start timer which refresh the base every few second, seconds parameter reads from .ini file
-		self.base_frame.load_base()
-		self.base_frame.syncBaseTimer()
+		self.base_frame.initBase()
+		
+		# start syncronization manager
+		self.startSyncManager()
+
 		self.loadStats()
 		self.aot_frame.load_act()
 		self.ra_frame.load_act()
@@ -191,8 +199,7 @@ class DocMaker(Tk):
 		self.generate_button.bind('<Button-1>',self.generate_info)
 
 		self.base_frame.bind_all()
-		self.bind('<Control-Return>',self.base_frame.add_entry)
-		# self.bind('<Control-s>',self.base_frame.openAndSave)
+		self.bind('<Control-Return>',self.base_frame.addEntry)
 
 		self.aot_frame.bind_all()
 		self.ra_frame.bind_all()
@@ -234,6 +241,16 @@ class DocMaker(Tk):
 
 		window = OptionsWindow(self)
 
+	def startSyncManager(self):
+
+		'''Create observer which will see modifications in base file and starts his work'''
+		patterns = [self.base_file.get()]
+		_dir = os.path.split(self.base_file.get())[0]
+		handler = BaseFileEventHandler(patterns,self)
+		
+		self.baseSyncObserver.schedule(handler,_dir)
+		self.baseSyncObserver.start()
+
 	def loadStats(self):
 
 		'''Take data from base frame and put to statistic frame'''
@@ -253,8 +270,7 @@ class DocMaker(Tk):
 
 		self.base_file.set(filename)
 		self.write_options()
-		self.base_frame.load_base()
-		self.base_frame.syncBaseTimer()
+		self.base_frame.initBase()
 		self.loadStats()
 
 	def generate_info(self,event=None):

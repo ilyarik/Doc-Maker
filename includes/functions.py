@@ -54,7 +54,6 @@ def get_data_xls(filename):
 
 def save_xls_data(filename, entries):
 
-
 	if os.path.isfile(filename):
 		wb = load_workbook(filename)
 	else:

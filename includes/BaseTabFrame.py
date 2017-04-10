@@ -9,7 +9,6 @@ from .AutocompleteCombobox import AutocompleteCombobox
 import configparser
 import glob
 import datetime
-from pprint import pprint
 
 class BaseTabFrame(Frame):
 
@@ -21,9 +20,6 @@ class BaseTabFrame(Frame):
 		self.small_font = self.mainWindow.small_font
 		self.default_font = self.mainWindow.default_font
 		self.big_font = self.mainWindow.big_font
-
-		# Flag which true when syncronization enabled
-		self.syncronizing = True
 
 		# num of columns with date of act of transfer and act of elimination
 		# set values in self.readDateCols
@@ -54,8 +50,9 @@ class BaseTabFrame(Frame):
 			command=self.base_table.yview)
 		self.base_table.configure(yscrollcommand=self.base_tableScroll.set)	# attach scrollbar
 		ttk.Style().configure('Treeview',rowheight=25)						# set row height
-		self.base_table.tag_configure('yellow_row',background='#FFFF99')		# set tags
-		self.base_table.tag_configure('red_row',background='#FF9999')
+		self.base_table.tag_configure('green_row',background='#CCFFCC')
+		self.base_table.tag_configure('yellow_row',background='#FFFFCC')		# set tags
+		self.base_table.tag_configure('red_row',background='#FFCCCC')
 		self.base_table.tag_configure('table_text',font=self.small_font)
 
 		# labels for entry inputs and addition modes
@@ -135,7 +132,6 @@ class BaseTabFrame(Frame):
 			self.action_frame.pack(side=LEFT,fill=Y)
 			self.add_entry_button.grid(row=4,column=2,sticky=W+N+E+S)
 			self.del_entry_button.grid(row=5,column=2,sticky=W+N+E+S)
-			# self.save_base_button.grid(row=6,column=2,sticky=W+N+E+S)
 		else:
 			self.base_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
@@ -147,9 +143,8 @@ class BaseTabFrame(Frame):
 			for index,entry_input in enumerate(self.entry_inputs):
 				entry_input.bind("<Return>",self.saveEntry)
 				entry_input.bind("<Key>",lambda event=None,entry=entry_input:self.clipboard(event,entry))
-			self.add_entry_button.bind('<Button-1>',self.add_entry)
-			self.del_entry_button.bind('<Button-1>',self.del_entry)
-			# self.save_base_button.bind('<Button-1>',self.openAndSave)
+			self.add_entry_button.bind('<Button-1>',self.addEntry)
+			self.del_entry_button.bind('<Button-1>',self.delEntry)
 
 	def clipboard(self,event=None,entry=0):
 
@@ -224,7 +219,6 @@ class BaseTabFrame(Frame):
 		self.aoe_date_col.set(int(configs['Base']['aoe_date_col'])-1)
 		self.date_format.set(configs['Base']['date_format'])
 		self.addition_modes_default = eval(configs['Base']['addition_modes'])
-		self.refreshPeriod.set(configs['Base']['refresh_period'])
 
 	def saveAdditionModes(self):
 
@@ -255,9 +249,6 @@ class BaseTabFrame(Frame):
 			return
 
 		act_filepathes = glob.glob(self.mainWindow.destination_folder.get()+'/*.docx')
-
-		if len(self.base_table['columns']) == self.num_of_fields:
-			self.set_base_table_cols(self.num_of_fields+1)
 
 		acts = {}
 		for act_filepath in act_filepathes:
@@ -299,8 +290,6 @@ class BaseTabFrame(Frame):
 				index, 
 				width=col_width
 			)
-		# just in case
-		self.update()
 
 	def setCurrentEntry(self,event=None):
 
@@ -310,7 +299,7 @@ class BaseTabFrame(Frame):
 			values = self.base_table.item(selitem)['values']
 			for index in range(self.num_of_fields):
 				value = values[index]
-				if isinstance(self.entry_inputs[index], ttk.Combobox):
+				if isinstance(self.entry_inputs[index], AutocompleteCombobox):
 					self.entry_inputs[index].set(value)
 				elif isinstance(self.entry_inputs[index], Entry):
 					self.entry_inputs[index].delete(0,END)
@@ -326,109 +315,83 @@ class BaseTabFrame(Frame):
 		values_tmp = self.base_table.item(selitem)['values']
 		values = [entry_input.get() for entry_input in self.entry_inputs]
 		values.append(self.base_table.item(selitem)['values'][self.num_of_fields])
-		if u'' in values[:-1]:
-			tags.append("yellow_row")
 		self.base_table.item(selitem,values=values,tags=tags)
 		try:
 			self.refreshAutoDate()
 		except Exception as e:
 			self.base_table.item(selitem,values=values_tmp,tags=tags)
-			showerror(u'Ошибка.',u'Неверный формат даты (столбец %r). Используйте "дд.мм.гггг".\n%s' % (self.aot_date_col.get()+1,e))
+			showerror(u'Ошибка.',u'Неверный формат даты (столбец %r).\n%s' % (self.aot_date_col.get()+1,e))
 			return
 		self.save(self.mainWindow.base_file.get())
 		self.change_combobox_values()
 
-	def add_entry(self,event=None):
+	def addEntry(self,event=None):
 
 		tags = []
 		rows = self.base_table.get_children()
-		if rows:
-			values = self.base_table.item(rows[-1])['values']
-			for index in range(self.num_of_fields):
-				mode = self.entry_option_vars[index].get()	# get addition mode from comboboxes
-				if mode == self.ADDITION_MODES[0] or mode == self.ADDITION_MODES[3]:
-					values[index] = u''
-				elif mode == self.ADDITION_MODES[1]:
-					value_type = type(values[index])
-					if value_type == int:
-						values[index] += 1
-					elif value_type == str:
-						try:
-							number = re.findall(r'\d+$',values[index])
-							if number:
-								values[index] = re.sub(
-									r'\d+$',
-									str(int(number[-1])+1),
-									values[index])
-						except Exception as e:
-							showerror(u'Ошибка!', e)
+		if not rows:
+			return
 
-		else:
-			values = ['']*self.num_of_fields
-		if u'' in values:
-			tags.append("yellow_row")
+		# get values of last entry in treeview
+		values = self.base_table.item(rows[-1])['values']
+		for index in range(self.num_of_fields):
+			mode = self.entry_option_vars[index].get()	# get addition mode from comboboxes
+			if mode == self.ADDITION_MODES[0] or mode == self.ADDITION_MODES[3]:
+				values[index] = u''
+			elif mode == self.ADDITION_MODES[1]:
+				value_type = type(values[index])
+				if value_type == int:
+					values[index] += 1
+				elif value_type == str:
+					try:
+						number = re.findall(r'\d+$',values[index])
+						if number:
+							values[index] = re.sub(
+								r'\d+$',
+								str(int(number[-1])+1),
+								values[index])
+					except Exception as e:
+						showerror(u'Ошибка!', e)
+						return
+		if u'П' in values[-1]:
+			tags = ["green_row"]
+		if u'В' in values[-1]:
+			tags = ["yellow_row"]
+		if u'У' in values[-1]:
+			tags = ["red_row"]
+		
 		self.base_table.insert('', 'end', values=values, tags=tags)
 		self.num_of_entries+=1
 		self.base_table.selection_set(self.base_table.get_children()[-1])
 		self.base_table.see(self.base_table.get_children()[-1])
 		self.refreshAutoDate()
-		self.mainWindow.status_bar['text'] = u'Запись добавлена'
 		self.save(self.mainWindow.base_file.get())
 		self.change_combobox_values()
+		self.mainWindow.status_bar['text'] = u'Запись добавлена'
 
-	def del_entry(self,event=None):
+	def delEntry(self,event=None):
 
 		selitems = self.base_table.selection()
 		if not selitems:
 			return
-		if askyesno(u'Удаление',u'Удалить?'):
-			tags = []
-			for selitem in selitems:
-				self.base_table.delete(selitem)
-				self.num_of_entries-=1
-			self.mainWindow.status_bar['text'] = u'Запись удалена'
-			self.save(self.mainWindow.base_file.get())
-			self.change_combobox_values()
-
-	def syncBaseTimer(self):
-
-		'''Load base every few seconds'''
-		if not self.syncronizing:
+		if not askyesno(u'Удаление',u'Удалить?'):
 			return
-		self.after(self.refreshPeriod.get(),self.syncBaseTimer)
-		if not self.mainWindow.base_file.get():
-			return
-		self.syncBase()
-
-	def syncBase(self):
-
-		'''Read options and load base'''
-		self.readBaseData()
-		try:
-			from_base = get_data_xls(self.mainWindow.base_file.get())
-			from_table = self.getAllEntriesAsList()
-			# pprint(repr(from_base))
-			# pprint(repr(from_table))
-			if from_base[1:] != from_table:
-				diff = [item for item in from_base if item not in from_table]
-				diff_indexes = [str(row[0]) for row in diff]
-				self.load_base()
-				self.mainWindow.status_bar['text'] = u'База обновлена'
-				showinfo(u'Синхронизация.',u'База обновлена.\nОбновленные строки: %s.' % ','.join(diff_indexes))
-		except Exception as e:
-			self.syncronizing = False
-			showerror(u'Ошибка!',u'Ошибка во время синхронизации. Синхронизация отключена.\n%s' % e)
-			return
+		for selitem in selitems:
+			self.base_table.delete(selitem)
+			self.num_of_entries-=1
+		self.mainWindow.status_bar['text'] = u'Запись удалена'
+		self.save(self.mainWindow.base_file.get())
+		self.change_combobox_values()
 		
-	def load_base(self,event=None):
+	def initBase(self,event=None):
 
+		'''Initialize base tab, crate entry inputs, repack and rebind all'''
 		if not self.mainWindow.base_file.get():
 			return
 
 		entries = get_data_xls(self.mainWindow.base_file.get())
 
 		if not entries:
-			showerror(u'Ошибка!',u'Пустой файл базы.')
 			return
 		
 		self.num_of_entries = len(entries)
@@ -438,14 +401,13 @@ class BaseTabFrame(Frame):
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
 
-
 		# change variants in choice fields into tabs
-		if self.mainWindow.act_of_transfer.get():
-			self.mainWindow.aot_frame.get_replace_variants()
-		if self.mainWindow.return_act.get():
-			self.mainWindow.ra_frame.get_replace_variants()
-		if self.mainWindow.act_of_elimination.get():
-			self.mainWindow.aoe_frame.get_replace_variants()
+		# if self.mainWindow.act_of_transfer.get():
+		# 	self.mainWindow.aot_frame.get_replace_variants()
+		# if self.mainWindow.return_act.get():
+		# 	self.mainWindow.ra_frame.get_replace_variants()
+		# if self.mainWindow.act_of_elimination.get():
+		# 	self.mainWindow.aoe_frame.get_replace_variants()
 
 		self.sync_exist_acts()
 
@@ -458,26 +420,35 @@ class BaseTabFrame(Frame):
 		self.entry_options = []
 		self.entry_option_vars = []
 		
+		# repack all and rebind all in this method
 		self.create_entry_inputs(self.num_of_fields)
 
-		self.pack_all()
-		self.bind_all()
-
-		self.mainWindow.base_file_label_text['text'] = get_truncated_line(self.mainWindow.base_file.get(),40)
 		self.mainWindow.status_bar['text'] = u'База Загружена'
+		self.mainWindow.base_file_label_text['text'] = get_truncated_line(self.mainWindow.base_file.get(),40)
 
-	def openAndSave(self,event=None):
+	def loadBase(self):
 
-		'''Open .xlsx and save it'''
-		filename = asksaveasfilename(filetypes=(("XLS files", "*.xls;*.xlsx"),('All files','*.*')))
-		if not filename:
+		'''Reload entries into Treeview object'''
+		if not self.mainWindow.base_file.get():
 			return
 
-		self.save(filename)
+		entries = get_data_xls(self.mainWindow.base_file.get())
+
+		if not entries:
+			return
+
+		if self.num_of_fields != len(entries[0]):
+			showerror('Ошибка!','В файле базы изменилось количество столбцов. Перезагрузите программу.')
+		self.num_of_entries = len(entries)
+
+		self.base_table.delete(*self.base_table.get_children())
+		self.fill_table(entries)
+
+		self.sync_exist_acts()
 
 	def save(self,filename):
 
-		'''Save to filename'''
+		'''Save base to file'''
 		if not filename:
 			return
 		rows = self.base_table.get_children()
@@ -495,7 +466,7 @@ class BaseTabFrame(Frame):
 				if aoe_value:
 					entry[aoe_value] = datetime.datetime.strptime(entry[aoe_value], self.date_format.get()).date()
 			except:
-				# showerror(u'Ошибка.',u'Ошибка во время форматирования столбца с датой перед сохранением.\n%s' % e)
+				showerror(u'Ошибка.',u'Ошибка во время форматирования столбца с датой перед сохранением.\n%s' % e)
 				return
 			entries.append(entry)
 		# fill rows after base with None values
@@ -514,9 +485,9 @@ class BaseTabFrame(Frame):
 			col_name = str(col_index+1)+'. '+str(cell)
 			self.base_table.heading(col_index,text=col_name)
 
-		if len(self.base_table['columns']) == self.num_of_fields+1:
-			col_name = str(self.num_of_fields+1)+u'. В наличии'
-			self.base_table.heading(self.num_of_fields,text=col_name)
+		# add column with info about existing acts
+		col_name = str(self.num_of_fields+1)+u'. В наличии'
+		self.base_table.heading(self.num_of_fields,text=col_name)
 
 		for entry in entries[1:]:
 			values=[u'']*self.num_of_fields
@@ -542,10 +513,12 @@ class BaseTabFrame(Frame):
 		for item in self.base_table.get_children():
 			tags=[]
 			values = self.base_table.item(item)['values']
-			if len(values[-1]) and u'_' not in values[-1]:
-				tags.append('red_row')
-			if u'' in values[:-1]:
-				tags.append('yellow_row')
+			if u'П' in values[-1]:
+				tags = ["green_row"]
+			if u'В' in values[-1]:
+				tags = ["yellow_row"]
+			if u'У' in values[-1]:
+				tags = ["red_row"]
 			self.base_table.item(item,values=values,tags=tags)
 
 	def refreshAutoDate(self):
@@ -635,23 +608,20 @@ class BaseTabFrame(Frame):
 			self.entry_inputs[index] = item
 		self.pack_all()
 		self.bind_all()
+		self.change_combobox_values()
 
 	def change_combobox_values(self, event=None):
 
-		'''Autocompletion for comboboxes'''
-
+		'''Variants for comboboxes'''
 		for index in range(self.num_of_fields):
 			# filter combobox input values
 			if isinstance(self.entry_inputs[index], AutocompleteCombobox):
-
 				values = set()
 				for row in self.base_table.get_children():
 					value = str(self.base_table.item(row)['values'][index])
 					if value:
 						values.add(value)
 				values = sorted(values, key=str.lower)
-				# values = list(filter(lambda value: value.lower().startswith(self.entry_inputs[index].get().lower()),values))
-				# self.entry_inputs[index]['values'] = values
 				self.entry_inputs[index].set_completion_list(values)
 
 	def getColumnAsList(self, col_index, timedelta=None):
