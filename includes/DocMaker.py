@@ -41,8 +41,6 @@ class DocMaker(Tk):
 		self.create_aoe = BooleanVar()
 		# num of column from base for statistic
 		self.statsColIndex = IntVar()
-		# amount of rows to display in statistic
-		self.mostCommon = IntVar()
 
 		self.menu = Menu(self)
 		self.filemenu = Menu(self.menu,tearoff=0)
@@ -201,6 +199,7 @@ class DocMaker(Tk):
 		self.base_frame.bind_all()
 		self.bind('<Control-Return>',self.base_frame.addEntry)
 
+		self.stats_frame.bind_all()
 		self.aot_frame.bind_all()
 		self.ra_frame.bind_all()
 		self.aoe_frame.bind_all()
@@ -216,8 +215,7 @@ class DocMaker(Tk):
 		self.return_act.set(configs['Return_act']['filename'])
 		self.act_of_elimination.set(configs['Act_of_elimination']['filename'])
 		self.destination_folder.set(configs['DEFAULT']['destination_folder'])
-		self.statsColIndex.set(int(configs['Statistic']['col_index'])-1)
-		self.mostCommon.set(int(configs['Statistic']['most_common']))
+
 
 	def write_options(self):
 
@@ -256,10 +254,12 @@ class DocMaker(Tk):
 		'''Take data from base frame and put to statistic frame'''
 		if not self.base_file.get():
 			return
-		self.read_options()
-		data_list = self.base_frame.getColumnAsList(col_index=self.statsColIndex.get())
-		self.stats_frame.getStatsFromList(data_list=data_list,amount=self.mostCommon.get())
+		self.stats_frame.readOptions()
+		data_list = self.base_frame.getColumnAsList(col_index=self.stats_frame.colIndex.get()-1)
+		self.stats_frame.getStatsFromList(data_list=data_list)
+		self.stats_frame.initTable()
 		self.stats_frame.fillTable()
+		self.stats_frame.changeColumnChoices(self.base_frame.num_of_fields)
 		self.stats_frame.pack_all()
 
 	def set_base_file(self,event=None):

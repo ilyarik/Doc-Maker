@@ -212,7 +212,10 @@ class Calendar(ttk.Frame):
 	def setDate(self,entry,fmt):
 
 		'''Set entry text to selected date in specific format'''
-		date = self.selection.strftime(fmt)
+		date = self.selection
+		if not date:
+			return
+		date = date.strftime(fmt)
 		entry.delete(0,"end")
 		entry.insert(0,date)
 		self.master.destroy()

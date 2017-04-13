@@ -502,7 +502,6 @@ class BaseTabFrame(Frame):
 		except Exception as e:
 			showerror(u'Ошибка.',u'Ошибка во время записи в файл %s.\n%s' % (filename,e))
 			return
-		self.mainWindow.status_bar['text'] = u'База сохранена'
 
 	def fill_table(self, entries):
 
