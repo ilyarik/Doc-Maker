@@ -9,7 +9,7 @@ import configparser
 
 class ReplacementsTabFrame(Frame):
 
-	def __init__(self, mainWindow, act_name, act_var, plug_text):
+	def __init__(self, mainWindow, act_name, act_var, plug_text, title_text):
 
 		Frame.__init__(self)
 
@@ -22,6 +22,13 @@ class ReplacementsTabFrame(Frame):
 			self,
 			text=plug_text,
 			font=self.mainWindow.big_font
+			)
+
+		self.title = Label(
+			self,
+			text=title_text,
+			font=self.mainWindow.big_font,
+			pady=15
 			)
 
 		# create text field for display primary text from doc file
@@ -90,6 +97,7 @@ class ReplacementsTabFrame(Frame):
 	def pack_all(self):
 
 		'''Pack all elements in a tab frame'''
+		self.title.pack_forget()
 		self.frame_plug.pack_forget()
 		self.plain_text_frame.pack_forget()
 		self.plain_text.pack_forget()
@@ -106,6 +114,7 @@ class ReplacementsTabFrame(Frame):
 		self.add_replacement_button.grid_forget()
 
 		if self.act_var.get():
+			self.title.pack(side=TOP,fill=X)
 			self.plain_text_frame.pack(side=LEFT,fill=Y)
 			self.plain_text_label.pack(side=TOP)
 			self.plain_text.pack(side=LEFT,fill=Y)

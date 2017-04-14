@@ -21,7 +21,7 @@ class DocMaker(Tk):
 		Tk.__init__(self)
 
 		self.geometry('1200x800+50+10')
-		self.minsize(1000,700)
+		self.minsize(1200,800)
 		self.title(u'Составитель актов 2000')
 		self.update()
 
@@ -103,25 +103,28 @@ class DocMaker(Tk):
 		# ra - return act
 		# aoe - act of elimination
 		self.notebook = ttk.Notebook(self)
-		self.base_frame = BaseTabFrame(self)
-		self.stats_frame = StatsTabFrame(self)
+		self.base_frame = BaseTabFrame(self,title_text=u'Здесь отображается база записей СКЗИ')
+		self.stats_frame = StatsTabFrame(self,title_text=u'Здесь отображается статистика по выбранному столбцу')
 		self.aot_frame = ReplacementsTabFrame(
 			self,
 			act_name='aot',
 			act_var=self.act_of_transfer,
-			plug_text=u'Место для акта передачи'
+			plug_text=u'Место для акта передачи',
+			title_text=u'Настройки для генерации акта передачи (Enter в поле для подстановки)'
 			)
 		self.ra_frame = ReplacementsTabFrame(
 			self,
 			act_name='ra',
 			act_var=self.return_act,
-			plug_text=u'Место для акта возврата'
+			plug_text=u'Место для акта возврата',
+			title_text=u'Настройки для генерации акта возврата (Enter в поле для подстановки)'
 			)
 		self.aoe_frame = ReplacementsTabFrame(
 			self,
 			act_name='aoe',
 			act_var=self.act_of_elimination,
-			plug_text=u'Место для акта уничтожения'
+			plug_text=u'Место для акта уничтожения',
+			title_text=u'Настройки для генерации акта уничтожения (Enter в поле для подстановки)'
 			)
 
 		self.notebook.add(self.base_frame, text=u'База')
@@ -259,6 +262,7 @@ class DocMaker(Tk):
 		self.stats_frame.getStatsFromList(data_list=data_list)
 		self.stats_frame.initTable()
 		self.stats_frame.fillTable()
+		self.stats_frame.initFigure()
 		self.stats_frame.changeColumnChoices(self.base_frame.num_of_fields)
 		self.stats_frame.pack_all()
 

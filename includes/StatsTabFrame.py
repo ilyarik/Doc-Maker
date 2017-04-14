@@ -9,9 +9,17 @@ from collections import Counter,OrderedDict
 from pprint import pprint
 import configparser
 
+import matplotlib
+matplotlib.use("TkAgg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+# from matplotlib import style
+# style.use("ggplot")
+
 class StatsTabFrame(Frame):
 
-	def __init__(self, mainWindow):
+	def __init__(self, mainWindow,title_text):
 
 		Frame.__init__(self)
 
@@ -21,6 +29,8 @@ class StatsTabFrame(Frame):
 		self.big_font = self.mainWindow.big_font
 
 		self.statsList = []
+		# num of entries which will be displayed on figure
+		self.topStats = IntVar()
 		# num of columns in statistci table
 		self.num_of_columns = IntVar()
 
@@ -33,7 +43,7 @@ class StatsTabFrame(Frame):
 
 		self.title = Label(
 			self,
-			text='Здесь отображается статистика по выбранному столбцу',
+			text=title_text,
 			font=self.big_font,
 			pady=15
 			)
@@ -52,10 +62,12 @@ class StatsTabFrame(Frame):
 			range(1,2)
 			)
 
-		self.statsTableFrame = Frame(self,padx=50,pady=10)
+		self.statsFrame = Frame(self,padx=50,pady=10)
+		self.statsTableFrame = Frame(self.statsFrame)
 		self.statsTable = ttk.Treeview(
 			self.statsTableFrame,
-			show = 'headings'
+			show = 'headings',
+			selectmode='none'
 			)
 		# create scrollbar for table
 		self.statsTableScroll = Scrollbar(
@@ -74,18 +86,24 @@ class StatsTabFrame(Frame):
 		self.optionsFrame.pack_forget()
 		self.columnChoiceLabel.pack_forget()
 		self.columnChoiceMenu.pack_forget()
+		self.statsFrame.pack_forget()
 		self.statsTableFrame.pack_forget()
 		self.statsTable.pack_forget()
 		self.statsTableScroll.pack_forget()
+		self.figureCanvas.get_tk_widget().pack_forget()
+		self.figureCanvas._tkcanvas.pack_forget()
 
 		if self.mainWindow.base_file.get():
 			self.title.pack(side=TOP,fill=X)
 			self.optionsFrame.pack(side=TOP,fill=X)
 			self.columnChoiceLabel.pack(side=LEFT,anchor="nw")
 			self.columnChoiceMenu.pack(side=LEFT,anchor="nw")
-			self.statsTableFrame.pack(side=TOP,fill=X)
+			self.statsFrame.pack(side=TOP,fill=X)
+			self.statsTableFrame.pack(side=LEFT)
 			self.statsTable.pack(side=LEFT,anchor="nw")
 			self.statsTableScroll.pack(side=LEFT,fill=Y)
+			self.figureCanvas.get_tk_widget().pack(side=RIGHT)
+			self.figureCanvas._tkcanvas.pack(side=RIGHT)
 		else:
 			self.stats_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
 
@@ -100,6 +118,7 @@ class StatsTabFrame(Frame):
 		configs = configparser.ConfigParser()
 		configs.read(self.mainWindow.configsFileName)
 		self.colIndex.set(int(configs['Statistic']['col_index']))
+		self.topStats.set(int(configs['Statistic']['top_stats']))
 
 	def saveOptions(self):
 
@@ -117,7 +136,7 @@ class StatsTabFrame(Frame):
 		data_list = self.mainWindow.base_frame.getColumnAsList(col_index=self.colIndex.get()-1)
 		self.getStatsFromList(data_list=data_list)
 		self.fillTable()
-		self.changeColumnChoices(self.mainWindow.base_frame.num_of_fields)
+		self.animateFigure()
 
 	def changeColumnChoices(self,amountOfColumns):
 
@@ -166,3 +185,57 @@ class StatsTabFrame(Frame):
 			values[2] = stats_entry['total']
 			values[3] = stats_entry['percentage']
 			self.statsTable.insert('', 'end', values=values, tags=[])
+
+	def initFigure(self):
+
+		if not self.topStats.get():
+			return
+		if not self.statsList:
+			return
+
+		f = Figure(figsize=(9,5), dpi=60)
+		self.pie = f.add_subplot(111)
+
+		self.figureCanvas = FigureCanvasTkAgg(f, self.statsFrame)
+
+		self.animateFigure()
+
+	def animateFigure(self):
+
+		self.pie.clear()
+
+		data = []
+		labels = []
+
+		top = self.topStats.get()
+		# if more then 5 entries - put last entries to the 'others'
+		if len(self.statsList)<=top:
+			for item in self.statsList:
+				data.append(item['total'])
+				labels.append(item['name'])
+
+			explode = [0]*len(self.statsList)
+
+		else:
+			for item in self.statsList[:top]:
+				data.append(item['total'])
+				labels.append(item['name'])
+
+			data.append(0)
+
+			for item in self.statsList[top:]:
+				data[top] += item['total']
+			
+			labels.append(u'Другие')
+			explode = [0]*(top+1)
+		
+		explode[0] = 0.1
+
+		self.pie.pie(
+			data, 
+			explode=explode,
+			labels=labels,
+			autopct='%1.1f%%', 
+			shadow=True)
+
+		self.figureCanvas.draw()

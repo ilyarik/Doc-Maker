@@ -14,7 +14,7 @@ import calendar
 
 class BaseTabFrame(Frame):
 
-	def __init__(self, mainWindow):
+	def __init__(self, mainWindow,title_text):
 
 		Frame.__init__(self)
 
@@ -39,6 +39,14 @@ class BaseTabFrame(Frame):
 		# create table with entries
 		self.num_of_entries = 0
 		self.num_of_fields = 0
+
+		self.title = Label(
+			self,
+			text=title_text,
+			font=self.big_font,
+			pady=10
+			)
+
 		self.table_frame = Frame(self,pady=10,padx=10)
 		self.base_table = ttk.Treeview(
 			self.table_frame,
@@ -104,6 +112,7 @@ class BaseTabFrame(Frame):
 	def pack_all(self):
 
 		'''Pack all elements in a tab frame'''
+		self.title.pack_forget()
 		self.base_frame_plug.pack_forget()
 		self.table_frame.pack_forget()
 		self.base_table.grid_forget()
@@ -120,6 +129,7 @@ class BaseTabFrame(Frame):
 		self.save_base_button.grid_forget()
 
 		if self.mainWindow.base_file.get():
+			self.title.pack(side=TOP,fill=X)
 			self.table_frame.pack(side=TOP,fill=X)
 			self.base_table.pack(side=LEFT,fill=X,expand=True)
 			self.base_tableScroll.pack(side=RIGHT,fill=Y)
