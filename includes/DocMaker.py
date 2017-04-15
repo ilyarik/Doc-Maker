@@ -110,21 +110,21 @@ class DocMaker(Tk):
 			act_name='aot',
 			act_var=self.act_of_transfer,
 			plug_text=u'Место для акта передачи',
-			title_text=u'Настройки для генерации акта передачи (Enter в поле для подстановки)'
+			title_text=u'Настройки для акта передачи (Enter в поле для подстановки)'
 			)
 		self.ra_frame = ReplacementsTabFrame(
 			self,
 			act_name='ra',
 			act_var=self.return_act,
 			plug_text=u'Место для акта возврата',
-			title_text=u'Настройки для генерации акта возврата (Enter в поле для подстановки)'
+			title_text=u'Настройки для акта возврата (Enter в поле для подстановки)'
 			)
 		self.aoe_frame = ReplacementsTabFrame(
 			self,
 			act_name='aoe',
 			act_var=self.act_of_elimination,
 			plug_text=u'Место для акта уничтожения',
-			title_text=u'Настройки для генерации акта уничтожения (Enter в поле для подстановки)'
+			title_text=u'Настройки для акта уничтожения (Enter в поле для подстановки)'
 			)
 
 		self.notebook.add(self.base_frame, text=u'База')

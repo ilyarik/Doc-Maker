@@ -41,7 +41,7 @@ class ReplacementsTabFrame(Frame):
 		self.plain_text = Text(
 			self.plain_text_frame,
 			state=DISABLED,
-			width=45,
+			width=38,
 			font=self.mainWindow.default_font,
 			height=30
 			)
@@ -56,7 +56,7 @@ class ReplacementsTabFrame(Frame):
 		self.result_text = Text(
 			self.result_text_frame,
 			state=DISABLED,
-			width=45,
+			width=38,
 			font=self.mainWindow.default_font,
 			height=30
 			)
@@ -75,7 +75,7 @@ class ReplacementsTabFrame(Frame):
 		self.replacement_canvas = Canvas(
 			self,
 			borderwidth=0,
-			width=290,
+			width=440,
 			height=500)
 		self.replacement_frame = Frame(self.replacement_canvas,padx=10,pady=10)
 		self.replacement_frameScroll = Scrollbar(
@@ -124,12 +124,13 @@ class ReplacementsTabFrame(Frame):
 			
 			self.replacement_canvas.pack(side=LEFT,fill=BOTH)
 			for index in range(self.num_of_replacements):
-				self.primary_values_for_replacement[index].grid(row=index*4,column=0,pady=2,sticky=N)
-				self.labels_for_replacement[index].grid(row=index*4+1,column=0,pady=2,sticky=N)
-				self.new_values_for_replacement[index].grid(row=index*4+2,column=0,pady=2,sticky=N)
-			for index, replacement_separator in enumerate(self.replacements_separators):
-				replacement_separator.grid(row=index*4+3,column=0,padx=10,pady=5,sticky=W+E)
-			self.add_replacement_button.grid(row=self.num_of_replacements*5,column=0,pady=10,sticky=N)
+				self.primary_values_for_replacement[index].grid(row=index*2,column=0,pady=2,sticky=W)
+				self.labels_for_replacement[index].grid(row=index*2,column=1,pady=2,sticky=W)
+				self.new_values_for_replacement[index].grid(row=index*2,column=2,pady=2,sticky=E)
+				# add separator for all replacements except last
+				if index != self.num_of_replacements-1:
+					self.replacements_separators[index].grid(row=index*2+1,column=0,columnspan=3,padx=10,pady=5,sticky=W+E)
+			self.add_replacement_button.grid(row=self.num_of_replacements*5,column=0,columnspan=3,pady=10,sticky=N)
 			self.replacement_frameScroll.pack(side=LEFT, fill=Y)
 		else:
 			self.frame_plug.pack(side=TOP,fill=BOTH,expand=True)
@@ -291,7 +292,6 @@ class ReplacementsTabFrame(Frame):
 	def read_replacements(self):
 
 		'''Read replacements dict from .ini file'''
-
 		configs = configparser.ConfigParser()
 		configs.read(self.mainWindow.configsFileName)
 		
@@ -329,21 +329,21 @@ class ReplacementsTabFrame(Frame):
 		self.primary_values_for_replacement.append(
 			Entry(
 				self.replacement_frame,
-				width=30,
+				width=20,
 				font=self.mainWindow.default_font
 				)
 			)
 		self.labels_for_replacement.append(
 			Label(
 				self.replacement_frame,
-				text=u'Заменить на:',
+				text=u'заменить:',
 				font=self.mainWindow.small_font
 				)
 			)
 		self.new_values_for_replacement.append(
 			ttk.Combobox(
 				self.replacement_frame,
-				width=35,
+				width=20,
 				font=self.mainWindow.small_font,
 				values=[]
 				)
@@ -373,7 +373,6 @@ class ReplacementsTabFrame(Frame):
 	def replaceFrameConfigure(self,event=None):
 
 		'''Reset the scroll region to encompass the inner frame'''
-
 		self.replacement_canvas.configure(scrollregion=self.replacement_canvas.bbox("all"))
 
 	def get_result_value(self,index,index_row=0):
