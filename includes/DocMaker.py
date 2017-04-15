@@ -149,7 +149,7 @@ class DocMaker(Tk):
 
 		# read options from .ini file
 		self.read_options()
-		self.base_frame.initBase()
+		self.base_frame.initBaseTable()
 		
 		# start syncronization manager
 		self.startSyncManager()
@@ -260,9 +260,14 @@ class DocMaker(Tk):
 		self.stats_frame.readOptions()
 		data_list = self.base_frame.getColumnAsList(col_index=self.stats_frame.colIndex.get()-1)
 		self.stats_frame.getStatsFromList(data_list=data_list)
+		self.stats_frame.destroyTable()
 		self.stats_frame.initTable()
 		self.stats_frame.fillTable()
+
+		self.stats_frame.destroyFigure()
 		self.stats_frame.initFigure()
+		self.stats_frame.fillFigure()
+
 		self.stats_frame.changeColumnChoices(self.base_frame.num_of_fields)
 		self.stats_frame.pack_all()
 
@@ -274,7 +279,10 @@ class DocMaker(Tk):
 
 		self.base_file.set(filename)
 		self.write_options()
-		self.base_frame.initBase()
+
+		self.base_frame.destroyBaseTable()
+		self.base_frame.initBaseTable()
+
 		self.loadStats()
 
 	def generate_info(self,event=None):

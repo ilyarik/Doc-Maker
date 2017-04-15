@@ -64,18 +64,7 @@ class StatsTabFrame(Frame):
 
 		self.statsFrame = Frame(self,padx=50,pady=10)
 		self.statsTableFrame = Frame(self.statsFrame)
-		self.statsTable = ttk.Treeview(
-			self.statsTableFrame,
-			show = 'headings',
-			selectmode='none'
-			)
-		# create scrollbar for table
-		self.statsTableScroll = Scrollbar(
-			self.statsTableFrame,
-			orient=VERTICAL,
-			command=self.statsTable.yview
-			)
-		self.statsTable.configure(yscrollcommand=self.statsTableScroll.set)	# attach scrollbar
+		
 		ttk.Style().configure('Treeview',rowheight=25)						# set row height
 
 	def pack_all(self):
@@ -102,7 +91,7 @@ class StatsTabFrame(Frame):
 			self.statsTableFrame.pack(side=LEFT)
 			self.statsTable.pack(side=LEFT,anchor="nw")
 			self.statsTableScroll.pack(side=LEFT,fill=Y)
-			self.figureCanvas.get_tk_widget().pack(side=RIGHT)
+			# self.figureCanvas.get_tk_widget().pack(side=RIGHT)
 			self.figureCanvas._tkcanvas.pack(side=RIGHT)
 		else:
 			self.stats_frame_plug.pack(side=TOP,fill=BOTH,expand=True)
@@ -136,7 +125,7 @@ class StatsTabFrame(Frame):
 		data_list = self.mainWindow.base_frame.getColumnAsList(col_index=self.colIndex.get()-1)
 		self.getStatsFromList(data_list=data_list)
 		self.fillTable()
-		self.animateFigure()
+		self.fillFigure()
 
 	def changeColumnChoices(self,amountOfColumns):
 
@@ -159,9 +148,31 @@ class StatsTabFrame(Frame):
 		self.statsList = stats_list
 		self.num_of_columns.set(len(self.statsList[0])+1)
 
+	def destroyTable(self):
+
+		try:
+			self.statsTable.destroy()
+			self.statsTableScroll.destroy()
+		except AttributeError:
+			pass
+
 	def initTable(self):
 
 		'''Initialize statistic table'''
+		
+		self.statsTable = ttk.Treeview(
+			self.statsTableFrame,
+			show = 'headings',
+			selectmode='none'
+			)
+		# create scrollbar for table
+		self.statsTableScroll = Scrollbar(
+			self.statsTableFrame,
+			orient=VERTICAL,
+			command=self.statsTable.yview
+			)
+		self.statsTable.configure(yscrollcommand=self.statsTableScroll.set)	# attach scrollbar
+
 		self.statsTable['columns'] = ['']*self.num_of_columns.get()
 		self.statsTable.column(0,width=50)
 		self.statsTable.column(1,width=250)
@@ -186,6 +197,13 @@ class StatsTabFrame(Frame):
 			values[3] = stats_entry['percentage']
 			self.statsTable.insert('', 'end', values=values, tags=[])
 
+	def destroyFigure(self):
+
+		try:
+			self.figureCanvas.get_tk_widget().destroy()
+		except AttributeError:
+			pass
+
 	def initFigure(self):
 
 		if not self.topStats.get():
@@ -198,9 +216,7 @@ class StatsTabFrame(Frame):
 
 		self.figureCanvas = FigureCanvasTkAgg(f, self.statsFrame)
 
-		self.animateFigure()
-
-	def animateFigure(self):
+	def fillFigure(self):
 
 		self.pie.clear()
 
@@ -215,17 +231,13 @@ class StatsTabFrame(Frame):
 				labels.append(item['name'])
 
 			explode = [0]*len(self.statsList)
-
 		else:
 			for item in self.statsList[:top]:
 				data.append(item['total'])
 				labels.append(item['name'])
-
 			data.append(0)
-
 			for item in self.statsList[top:]:
 				data[top] += item['total']
-			
 			labels.append(u'Другие')
 			explode = [0]*(top+1)
 		

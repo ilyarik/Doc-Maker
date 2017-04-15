@@ -48,21 +48,7 @@ class BaseTabFrame(Frame):
 			)
 
 		self.table_frame = Frame(self,pady=10,padx=10)
-		self.base_table = ttk.Treeview(
-			self.table_frame,
-			show = 'headings'
-			)
-		# create scrollbar for table
-		self.base_tableScroll = Scrollbar(
-			self.table_frame,
-			orient=VERTICAL,
-			command=self.base_table.yview)
-		self.base_table.configure(yscrollcommand=self.base_tableScroll.set)	# attach scrollbar
-		ttk.Style().configure('Treeview',rowheight=25)						# set row height
-		self.base_table.tag_configure('green_row',background='#CCFFCC')
-		self.base_table.tag_configure('yellow_row',background='#FFFFCC')		# set tags
-		self.base_table.tag_configure('red_row',background='#FFCCCC')
-		self.base_table.tag_configure('table_text',font=self.small_font)
+
 
 		# labels for entry inputs and addition modes
 		self.entry_frame = Frame(self,pady=10,padx=10)
@@ -418,8 +404,16 @@ class BaseTabFrame(Frame):
 		self.mainWindow.status_bar['text'] = u'Запись удалена'
 		self.save(self.mainWindow.base_file.get())
 		self.change_combobox_values()
+
+	def destroyBaseTable(self):
+
+		try:
+			self.base_table.destroy()
+			self.base_tableScroll.destroy()
+		except AttributeError:
+			pass
 		
-	def initBase(self,event=None):
+	def initBaseTable(self,event=None):
 
 		'''Initialize base tab, crate entry inputs, repack and rebind all'''
 		if not self.mainWindow.base_file.get():
@@ -429,6 +423,24 @@ class BaseTabFrame(Frame):
 
 		if not entries:
 			return
+
+		self.destroyBaseTable()
+
+		self.base_table = ttk.Treeview(
+			self.table_frame,
+			show = 'headings'
+			)
+		# create scrollbar for table
+		self.base_tableScroll = Scrollbar(
+			self.table_frame,
+			orient=VERTICAL,
+			command=self.base_table.yview)
+		self.base_table.configure(yscrollcommand=self.base_tableScroll.set)	# attach scrollbar
+		ttk.Style().configure('Treeview',rowheight=25)						# set row height
+		self.base_table.tag_configure('green_row',background='#CCFFCC')
+		self.base_table.tag_configure('yellow_row',background='#FFFFCC')		# set tags
+		self.base_table.tag_configure('red_row',background='#FFCCCC')
+		self.base_table.tag_configure('table_text',font=self.small_font)
 		
 		self.num_of_entries = len(entries)
 		self.num_of_fields = len(entries[0])
@@ -436,14 +448,6 @@ class BaseTabFrame(Frame):
 
 		self.base_table.delete(*self.base_table.get_children())
 		self.fill_table(entries)
-
-		# change variants in choice fields into tabs
-		# if self.mainWindow.act_of_transfer.get():
-		# 	self.mainWindow.aot_frame.get_replace_variants()
-		# if self.mainWindow.return_act.get():
-		# 	self.mainWindow.ra_frame.get_replace_variants()
-		# if self.mainWindow.act_of_elimination.get():
-		# 	self.mainWindow.aoe_frame.get_replace_variants()
 
 		self.sync_exist_acts()
 
