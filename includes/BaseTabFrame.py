@@ -48,7 +48,7 @@ class BaseTabFrame(Frame):
 			)
 
 		self.table_frame = Frame(self,pady=10,padx=10)
-
+		ttk.Style().configure('Treeview',rowheight=25)						# set row height
 
 		# labels for entry inputs and addition modes
 		self.entry_frame = Frame(self,pady=10,padx=10)
@@ -436,7 +436,7 @@ class BaseTabFrame(Frame):
 			orient=VERTICAL,
 			command=self.base_table.yview)
 		self.base_table.configure(yscrollcommand=self.base_tableScroll.set)	# attach scrollbar
-		ttk.Style().configure('Treeview',rowheight=25)						# set row height
+		
 		self.base_table.tag_configure('green_row',background='#CCFFCC')
 		self.base_table.tag_configure('yellow_row',background='#FFFFCC')		# set tags
 		self.base_table.tag_configure('red_row',background='#FFCCCC')
@@ -663,17 +663,22 @@ class BaseTabFrame(Frame):
 				values = sorted(values, key=str.lower)
 				self.entry_inputs[index].set_completion_list(values)
 
-	def getColumnAsList(self, col_index, timedelta=None):
+	def getHeadingText(self,col_index):
 
-		'''Get list of values in col_index column in base'''
-		if not self.mainWindow.base_file.get():
+		if not self.base_table:
 			return
 
+		return self.base_table.heading(col_index)['text']
+
+	def getColumnAsList(self, col_index):
+
+		'''Get list of values in col_index column in base'''
 		rows = self.base_table.get_children()
 		if not rows:
 			return
 
 		column_list = []
+
 		for row in rows:
 
 			values = self.base_table.item(row)['values']

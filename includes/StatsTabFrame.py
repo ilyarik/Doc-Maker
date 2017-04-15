@@ -122,9 +122,20 @@ class StatsTabFrame(Frame):
 	def changeColIndex(self,*args):
 
 		self.saveOptions()
-		data_list = self.mainWindow.base_frame.getColumnAsList(col_index=self.colIndex.get()-1)
+		col_index = self.colIndex.get()-1
+		data_list = self.mainWindow.base_frame.getColumnAsList(col_index=col_index)
+		heading_text = self.mainWindow.base_frame.getHeadingText(col_index=col_index)
 		self.getStatsFromList(data_list=data_list)
-		self.fillTable()
+
+		headings = (
+			'№',
+			heading_text,
+			'Всего',
+			'Процент'
+			)
+
+		self.fillTable(headings)
+
 		self.fillFigure()
 
 	def changeColumnChoices(self,amountOfColumns):
@@ -159,7 +170,6 @@ class StatsTabFrame(Frame):
 	def initTable(self):
 
 		'''Initialize statistic table'''
-		
 		self.statsTable = ttk.Treeview(
 			self.statsTableFrame,
 			show = 'headings',
@@ -179,15 +189,13 @@ class StatsTabFrame(Frame):
 		self.statsTable.column(2,width=70)
 		self.statsTable.column(3,width=70)
 
-	def fillTable(self):
+	def fillTable(self,headings):
 
 		'''Fill table with statistic'''
 		self.statsTable.delete(*self.statsTable.get_children())
 
-		self.statsTable.heading(0,text='№')
-		self.statsTable.heading(1,text='ФИО сотрудника')
-		self.statsTable.heading(2,text='Всего')
-		self.statsTable.heading(3,text='Процент')
+		for col_index, heading in enumerate(headings):
+			self.statsTable.heading(col_index,text=heading)
 		
 		for index, stats_entry in enumerate(self.statsList):
 			values=['']*self.num_of_columns.get()

@@ -258,11 +258,21 @@ class DocMaker(Tk):
 		if not self.base_file.get():
 			return
 		self.stats_frame.readOptions()
-		data_list = self.base_frame.getColumnAsList(col_index=self.stats_frame.colIndex.get()-1)
+		col_index = self.stats_frame.colIndex.get()-1
+		data_list = self.base_frame.getColumnAsList(col_index=col_index)
+		heading_text = self.base_frame.getHeadingText(col_index=col_index)
 		self.stats_frame.getStatsFromList(data_list=data_list)
 		self.stats_frame.destroyTable()
 		self.stats_frame.initTable()
-		self.stats_frame.fillTable()
+
+		headings = (
+			'№',
+			heading_text,
+			'Всего',
+			'Процент'
+			)
+
+		self.stats_frame.fillTable(headings)
 
 		self.stats_frame.destroyFigure()
 		self.stats_frame.initFigure()
