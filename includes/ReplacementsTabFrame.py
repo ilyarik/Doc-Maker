@@ -41,7 +41,7 @@ class ReplacementsTabFrame(Frame):
 		self.plain_text = Text(
 			self.plain_text_frame,
 			state=DISABLED,
-			width=38,
+			width=37,
 			font=self.mainWindow.default_font,
 			height=30
 			)
@@ -56,7 +56,7 @@ class ReplacementsTabFrame(Frame):
 		self.result_text = Text(
 			self.result_text_frame,
 			state=DISABLED,
-			width=38,
+			width=37,
 			font=self.mainWindow.default_font,
 			height=30
 			)

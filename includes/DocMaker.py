@@ -12,6 +12,7 @@ from .ReplacementsTabFrame import ReplacementsTabFrame
 from .BaseTabFrame import BaseTabFrame
 from .StatsTabFrame import StatsTabFrame
 from .BaseFileEventHandler import BaseFileEventHandler
+from .ActsEventHandler import ActsEventHandler
 from watchdog.observers import Observer
 
 class DocMaker(Tk):
@@ -144,15 +145,17 @@ class DocMaker(Tk):
 			padx=10
 			)
 
-		# init syncronization manager
+		# init syncronization managers
 		self.baseSyncObserver = Observer()
+		self.actsSyncObserver = Observer()
 
 		# read options from .ini file
 		self.read_options()
 		self.base_frame.initBaseTable()
 		
 		# start syncronization manager
-		self.startSyncManager()
+		self.startBaseSyncManager()
+		self.startActsSyncManager()
 
 		self.loadStats()
 		self.aot_frame.load_act()
@@ -242,7 +245,7 @@ class DocMaker(Tk):
 
 		window = OptionsWindow(self)
 
-	def startSyncManager(self):
+	def startBaseSyncManager(self):
 
 		'''Create observer which will see modifications in base file and starts his work'''
 		patterns = [self.base_file.get()]
@@ -251,6 +254,16 @@ class DocMaker(Tk):
 		
 		self.baseSyncObserver.schedule(handler,_dir)
 		self.baseSyncObserver.start()
+
+	def startActsSyncManager(self):
+
+		'''Create observer which will see modifications in base file and starts his work'''
+		patterns = [self.destination_folder.get()+'/*.docx']
+		_dir = self.destination_folder.get()
+		handler = ActsEventHandler(patterns,self.base_frame.sync_exist_acts)
+		
+		self.actsSyncObserver.schedule(handler,_dir)
+		self.actsSyncObserver.start()
 
 	def loadStats(self):
 
@@ -320,7 +333,7 @@ class DocMaker(Tk):
 			return
 
 		# get data from table
-		entries = [self.base_frame.base_table.item(selitem)['values'] for selitem in self.base_frame.base_table.selection()]
+		entries = [self.base_frame.base_table.item(selitem)['values'][:-1] for selitem in self.base_frame.base_table.selection()]
 		if [entry for entry in entries if not all(entry)]:
 			showerror(u'Ошибка.', u'Есть незаполненные значения в строке.')
 			return
@@ -396,5 +409,4 @@ class DocMaker(Tk):
 				create_new_replaced_doc(self.act_of_elimination.get(), doc_filename, replacements)
 
 		showinfo(u'Успех',u'Выполнено')
-		self.base_frame.sync_exist_acts()
 		self.status_bar['text'] = u'Готово'

@@ -249,11 +249,10 @@ class BaseTabFrame(Frame):
 		'''Looks for docx files in destination folder,
 			add info about existing files into last column'''
 		# clear last column
-		for row in self.base_table.get_children():
-			tags = self.base_table.item(row)['tags']
-			values = self.base_table.item(row)['values']
-			values[self.num_of_fields] = ''
-			self.base_table.item(row,values=values,tags=tags)
+		for item in self.base_table.get_children():
+			values = self.base_table.item(item)['values']
+			values[-1] = ''
+			self.base_table.item(item,values=values)
 
 		if not self.mainWindow.base_file.get():
 			return
@@ -558,7 +557,7 @@ class BaseTabFrame(Frame):
 				tags = ["yellow_row"]
 			if u'У' in values[-1]:
 				tags = ["red_row"]
-			self.base_table.item(item,values=values,tags=tags)
+			self.base_table.item(item,tags=tags)
 
 	def refreshAutoDate(self):
 
@@ -664,9 +663,6 @@ class BaseTabFrame(Frame):
 				self.entry_inputs[index].set_completion_list(values)
 
 	def getHeadingText(self,col_index):
-
-		if not self.base_table:
-			return
 
 		return self.base_table.heading(col_index)['text']
 
